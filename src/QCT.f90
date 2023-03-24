@@ -6,23 +6,22 @@ program QCT
 
     type(ddeabm_with_event_class) :: s
     character(len=80) :: initcond_file, traj_file
-    integer :: ntrajs, itraj, maxcond, totalsteps
-    real(dp) :: tottime, tstep, t, timein, timeout, kener, potener, print_time, tprev, rfin, gval
+    integer :: ntrajs, itraj, maxcond, totalsteps, idid
+    real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
+                potener, print_time, tprev, rfin, gval, Eini, Eend
     real(dp), allocatable :: XP(:), XPini(:)
     integer, parameter :: cond_unit = 11
     logical :: open_unit
 
     !variables for ddeabm
-    integer :: idid,lrw,liw
-    real(8), allocatable :: rwork(:)
-    real(8) :: relerr,abserr   !absolute and relative error in propagation
+    real(8) :: relerr,abserr !absolute and relative error in propagation
 
     namelist /input/ &
         ntrajs, &
         nA, &
         tottime, &
-        tstep, &
         print_time, &
+        max_step_factor, &
         relerr, &
         abserr, &
         rfin, &
@@ -39,25 +38,21 @@ program QCT
     relerr = 1.e-8_dp
     abserr = 1.e-8_dp
     print_time = 0._dp
+    max_step_factor = 10._dp
 
     open(10,file="input.dat", status="old")
     read(10, nml=input)
     ndim = 2 * 3 * nA
-    allocate(XP(ndim), XPini(ndim), rwork(lrw), massA(nA), atnameA(nA))
+    allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA))
     read(10, nml=mass)
     close(10)
     write(sal_unit, nml=input)
     write(sal_unit, nml=mass)
 
-    !variables for ddeab subroutine
-    lrw=130+21*ndim
-    liw=51
-
     ! Convert times
+    totalsteps = int(max_step_factor * tottime)
     tottime=tottime/autofs
-    tstep=tstep/autofs
     print_time=print_time/autofs
-    totalsteps = int(tottime / tstep)
     call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
         report=xyz_report, g=checkend, root_tol=1e-10_dp)
 
@@ -85,14 +80,21 @@ program QCT
 
         timein = 0._dp
         timeout = tottime
-        idid = 0
         call total_ener(XP, kener, potener)
-        write(sal_unit,*) "Ener init/cm-1 =", (kener + potener) * autocm_1
-
+        Eini = (kener + potener) * autocm_1
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
-
+        if (idid .eq. -1) then
+            write(sal_unit,"(/A)") "*******************************************"
+            write(sal_unit,"(A)") "ERROR: Maximum number of integration steps reached."
+            write(sal_unit,"(A)") "Maximum number of iterations computed as int(max_step_factor * tottime)"
+            write(sal_unit,"(A)") "Increase either parameter in the input to increase the maximum number of steps"
+            write(sal_unit,"(A/)") "*******************************************"
+        end if
         call total_ener(XP, kener, potener)
-        write(sal_unit,*) "Ener end/cm-1 =", (kener + potener) * autocm_1
+        Eend = (kener + potener) * autocm_1
+        write(sal_unit,*) "Ener(initial) / cm-1:", Eini
+        write(sal_unit,*) "Ener(final) / cm-1  :", Eend
+        write(sal_unit,*) "Ener(delta) / cm-1  :", Eend - Eini
         write(sal_unit,*) "Final time / fs:", timein * autofs
         write(sal_unit,*) "End of traj =", itraj
         write(end_unit,*) itraj, XPini, XP
