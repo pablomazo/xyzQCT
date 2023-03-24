@@ -45,6 +45,8 @@ program QCT
     allocate(XP(ndim), XPini(ndim), rwork(lrw), massA(nA), atnameA(nA))
     read(10, nml=mass)
     close(10)
+    write(sal_unit, nml=input)
+    write(sal_unit, nml=mass)
 
     !variables for ddeab subroutine
     lrw=130+21*ndim
