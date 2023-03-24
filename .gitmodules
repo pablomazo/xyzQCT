@@ -1,0 +1,3 @@
+[submodule "src/ddeabm"]
+	path = src/ddeabm
+	url = git@github.com:jacobwilliams/ddeabm.git
