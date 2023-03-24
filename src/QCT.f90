@@ -150,7 +150,6 @@ subroutine get_init_cond(ndim, XP, maxcond, cond_unit)
 
     call RANDOM_NUMBER(r)
     icond = floor(maxcond * r + 1)
-    icond = 1
     write(sal_unit,*) "Using icond =", icond
     write(sal_unit,*) "Initial condition in unit =", cond_unit
 
