@@ -60,7 +60,6 @@ program QCT
     totalsteps = int(tottime / tstep)
     call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
         report=xyz_report, g=checkend, root_tol=1e-10_dp)
-    !call s%initialize(ndim, maxnum=50, df=derivs, rtol=[relerr], atol=[abserr])
 
     ! Convert mass
     massA = massA/autouma
