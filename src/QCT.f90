@@ -4,10 +4,10 @@ program QCT
     use ddeabm_module, wp => ddeabm_rk
     implicit none
 
-    type(ddeabm_class) :: s
+    type(ddeabm_with_event_class) :: s
     character(len=80) :: initcond_file, traj_file
     integer :: ntrajs, itraj, maxcond, totalsteps
-    real(dp) :: tottime, tstep, t, timein, timeout, ener, print_time, tprev
+    real(dp) :: tottime, tstep, t, timein, timeout, ener, print_time, tprev, rfin, gval
     real(dp), allocatable :: XP(:)
     integer, parameter :: cond_unit = 11
 
@@ -24,6 +24,7 @@ program QCT
         print_time, &
         relerr, &
         abserr, &
+        rfin, &
         initcond_file
 
     namelist /mass/ &
@@ -33,6 +34,7 @@ program QCT
 
     open(sal_unit, file="sal", status="replace")
     open(end_unit, file="end_conditions", status="replace")
+    gval = 0._dp
     relerr = 1.e-8_dp
     abserr = 1.e-8_dp
     print_time = 0._dp
@@ -53,8 +55,8 @@ program QCT
     tstep=tstep/autofs
     print_time=print_time/autofs
     totalsteps = int(tottime / tstep)
-    call s%initialize(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
-        report=xyz_report)
+    call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
+        report=xyz_report, g=checkend, root_tol=1e-10_dp)
     !call s%initialize(ndim, maxnum=50, df=derivs, rtol=[relerr], atol=[abserr])
 
     ! Convert mass
@@ -81,7 +83,7 @@ program QCT
         call total_ener(XP, ener)
         write(sal_unit,*) "Ener init/cm-1 =", ener * autocm_1
 
-        call s%integrate(timein, XP, timeout, idid=idid, integration_mode=2)
+        call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
 
         write(sal_unit,*) "Final time / fs:", timein * autofs
         call total_ener(XP, ener)
@@ -135,6 +137,30 @@ program QCT
             end do
         end if
 
+    end subroutine
+
+    subroutine checkend(me, t, XP, is_end)
+        implicit none
+        class(ddeabm_with_event_class), intent(inout) :: me
+        integer :: iat1, iat2, ix
+        real(dp), intent(in) :: t, XP(:)
+        real(dp), intent(out) :: is_end
+        real(dp) :: d
+
+        is_end = 1._dp
+        outer: do iat1=1,nA
+            do iat2=iat1+1,nA
+                d = 0._dp
+                do ix=1,3
+                    d = d + (XP(3*(iat1-1)+ix) - XP(3*(iat2-1)+ix))**2
+                end do
+                d = sqrt(d)
+                if (d > rfin) then
+                    is_end = 0._dp
+                    exit outer
+                end if
+            end do
+        end do outer
     end subroutine
 end program
 
