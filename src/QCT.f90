@@ -65,7 +65,7 @@ program QCT
     write(sal_unit,*) "Total number of initial conditions =", maxcond
 
     do itraj=1, ntrajs
-        write(sal_unit,*) '---------------'
+        write(sal_unit,"(/A)") '---------------'
         tprev = 0._dp
         if (print_time > 0._dp) then
             write(traj_file,'("traj_",i6.6,".xyz")')itraj
@@ -100,7 +100,7 @@ program QCT
         write(end_unit,*) itraj, XPini, XP
         inquire(unit=xyz_unit, opened=open_unit)
         if (open_unit) close(xyz_unit)
-        write(sal_unit,*) '---------------'
+        write(sal_unit,"(A/)") '---------------'
     end do
     close(sal_unit)
     close(end_unit)
