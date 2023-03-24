@@ -68,6 +68,7 @@ program QCT
     write(sal_unit,*) "Total number of initial conditions =", maxcond
 
     do itraj=1, ntrajs
+        write(sal_unit,*) '---------------'
         tprev = 0._dp
         write(traj_file,'("traj_",i6.6,".xyz")')itraj
         open(xyz_unit, file=trim(traj_file), status="replace")
@@ -86,12 +87,13 @@ program QCT
 
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
 
-        write(sal_unit,*) "Final time / fs:", timein * autofs
         call total_ener(XP, ener)
         write(sal_unit,*) "Ener end/cm-1 =", ener * autocm_1
+        write(sal_unit,*) "Final time / fs:", timein * autofs
         write(sal_unit,*) "End of traj =", itraj
         write(end_unit,*) itraj, XPini, XP
         close(xyz_unit)
+        write(sal_unit,*) '---------------'
     end do
     close(sal_unit)
     close(end_unit)
@@ -178,7 +180,6 @@ subroutine get_init_cond(ndim, XP, maxcond, cond_unit)
     call RANDOM_NUMBER(r)
     icond = floor(maxcond * r + 1)
     write(sal_unit,*) "Using icond =", icond
-    write(sal_unit,*) "Initial condition in unit =", cond_unit
 
     read(cond_unit, *)
     do i=1, icond
@@ -189,7 +190,7 @@ end subroutine
 
 
 subroutine total_ener(XP, ener)
-    use constants, only: dp, sal_unit
+    use constants, only: dp
     use settings, only: ndim
     implicit none
     real(dp), intent(in) :: XP(ndim)
@@ -199,8 +200,6 @@ subroutine total_ener(XP, ener)
     call kinetic_ener(XP(ndim/2+1:), k)
     call potxyz(XP(:ndim/2), pot, der)
     ener = k + pot
-    write(sal_unit,*) "Kinetic =", k
-    write(sal_unit,*) "Potential =", pot
 end subroutine
 
 subroutine kinetic_ener(P, E)
@@ -218,7 +217,6 @@ subroutine kinetic_ener(P, E)
             E = E + P(3*(iat-1)+ix)**2 / massA(iat)
         end do
     end do
-    write(sal_unit,*) '---------------'
     E = E / 2._dp
 end subroutine
 
