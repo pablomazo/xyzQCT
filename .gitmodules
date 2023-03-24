@@ -1,6 +1,6 @@
 [submodule "src/ddeabm"]
-	path = src/ddeabm
+	path = lib/ddeabm
 	url = git@github.com:jacobwilliams/ddeabm.git
 [submodule "src/roots-fortran"]
-	path = src/roots-fortran
+	path = lib/roots-fortran
 	url = git@github.com:jacobwilliams/roots-fortran.git
