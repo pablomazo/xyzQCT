@@ -10,6 +10,7 @@ program QCT
     real(dp) :: tottime, tstep, t, timein, timeout, ener, print_time, tprev, rfin, gval
     real(dp), allocatable :: XP(:), XPini(:)
     integer, parameter :: cond_unit = 11
+    logical :: open_unit
 
     !variables for ddeabm
     integer :: idid,lrw,liw
@@ -72,8 +73,10 @@ program QCT
     do itraj=1, ntrajs
         write(sal_unit,*) '---------------'
         tprev = 0._dp
-        write(traj_file,'("traj_",i6.6,".xyz")')itraj
-        open(xyz_unit, file=trim(traj_file), status="replace")
+        if (print_time > 0._dp) then
+            write(traj_file,'("traj_",i6.6,".xyz")')itraj
+            open(xyz_unit, file=trim(traj_file), status="replace")
+        end if
         call s%first_call()
         t = 0._dp
 
@@ -94,7 +97,8 @@ program QCT
         write(sal_unit,*) "Final time / fs:", timein * autofs
         write(sal_unit,*) "End of traj =", itraj
         write(end_unit,*) itraj, XPini, XP
-        close(xyz_unit)
+        inquire(unit=xyz_unit, opened=open_unit)
+        if (open_unit) close(xyz_unit)
         write(sal_unit,*) '---------------'
     end do
     close(sal_unit)
@@ -133,7 +137,7 @@ program QCT
         integer :: iat
         real(dp), intent(in) :: t, XP(:)
 
-        if (t - tprev > print_time) then
+        if (t - tprev > print_time .and. print_time > 0._dp) then
             tprev = t
             write(xyz_unit,*) nA
             write(xyz_unit,*) "t=", t * autofs
