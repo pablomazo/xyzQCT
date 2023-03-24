@@ -8,7 +8,7 @@ program QCT
     character(len=80) :: initcond_file, traj_file
     integer :: ntrajs, itraj, maxcond, totalsteps
     real(dp) :: tottime, tstep, t, timein, timeout, ener, print_time, tprev, rfin, gval
-    real(dp), allocatable :: XP(:)
+    real(dp), allocatable :: XP(:), XPini(:)
     integer, parameter :: cond_unit = 11
 
     !variables for ddeabm
@@ -42,7 +42,7 @@ program QCT
     open(10,file="input.dat", status="old")
     read(10, nml=input)
     ndim = 2 * 3 * nA
-    allocate(XP(ndim), rwork(lrw), massA(nA), atnameA(nA))
+    allocate(XP(ndim), XPini(ndim), rwork(lrw), massA(nA), atnameA(nA))
     read(10, nml=mass)
     close(10)
 
@@ -75,7 +75,8 @@ program QCT
         t = 0._dp
 
         write(sal_unit,*) "Starting traj =", itraj
-        call get_init_cond(ndim, XP, maxcond, cond_unit)
+        call get_init_cond(ndim, XPini, maxcond, cond_unit)
+        XP = XPini
 
         timein = 0._dp
         timeout = tottime
@@ -89,7 +90,7 @@ program QCT
         call total_ener(XP, ener)
         write(sal_unit,*) "Ener end/cm-1 =", ener * autocm_1
         write(sal_unit,*) "End of traj =", itraj
-        write(end_unit,*) itraj, XP
+        write(end_unit,*) itraj, XPini, XP
         close(xyz_unit)
     end do
     close(sal_unit)
