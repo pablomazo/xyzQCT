@@ -7,7 +7,7 @@ program QCT
     type(ddeabm_with_event_class) :: s
     character(len=80) :: initcond_file, traj_file
     integer :: ntrajs, itraj, maxcond, totalsteps
-    real(dp) :: tottime, tstep, t, timein, timeout, ener, print_time, tprev, rfin, gval
+    real(dp) :: tottime, tstep, t, timein, timeout, kener, potener, print_time, tprev, rfin, gval
     real(dp), allocatable :: XP(:), XPini(:)
     integer, parameter :: cond_unit = 11
     logical :: open_unit
@@ -87,13 +87,13 @@ program QCT
         timein = 0._dp
         timeout = tottime
         idid = 0
-        call total_ener(XP, ener)
-        write(sal_unit,*) "Ener init/cm-1 =", ener * autocm_1
+        call total_ener(XP, kener, potener)
+        write(sal_unit,*) "Ener init/cm-1 =", (kener + potener) * autocm_1
 
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
 
-        call total_ener(XP, ener)
-        write(sal_unit,*) "Ener end/cm-1 =", ener * autocm_1
+        call total_ener(XP, kener, potener)
+        write(sal_unit,*) "Ener end/cm-1 =", (kener + potener) * autocm_1
         write(sal_unit,*) "Final time / fs:", timein * autofs
         write(sal_unit,*) "End of traj =", itraj
         write(end_unit,*) itraj, XPini, XP
@@ -136,11 +136,13 @@ program QCT
         class(ddeabm_class), intent(inout) :: me
         integer :: iat
         real(dp), intent(in) :: t, XP(:)
+        real(dp) :: kener, potener
 
         if (t - tprev > print_time .and. print_time > 0._dp) then
+            call total_ener(XP, kener, potener)
             tprev = t
             write(xyz_unit,*) nA
-            write(xyz_unit,*) "t=", t * autofs
+            write(xyz_unit,*) "t/fs, kinetic (au), pot (au)=", t * autofs, kener, potener
             do iat=1,nA
                 write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA
             end do
@@ -195,17 +197,16 @@ subroutine get_init_cond(ndim, XP, maxcond, cond_unit)
 end subroutine
 
 
-subroutine total_ener(XP, ener)
+subroutine total_ener(XP, k, pot)
     use constants, only: dp
     use settings, only: ndim
     implicit none
     real(dp), intent(in) :: XP(ndim)
-    real(dp), intent(out) :: ener
-    real(dp) :: der(ndim/2), pot, k
+    real(dp), intent(out) :: k, pot
+    real(dp) :: der(ndim/2)
 
     call kinetic_ener(XP(ndim/2+1:), k)
     call potxyz(XP(:ndim/2), pot, der)
-    ener = k + pot
 end subroutine
 
 subroutine kinetic_ener(P, E)
