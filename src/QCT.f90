@@ -1,11 +1,11 @@
 program QCT
-    use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit
+    use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: ndim, nA, massA, atnameA
     use ddeabm_module, wp => ddeabm_rk
     implicit none
 
     type(ddeabm_class) :: s
-    character(len=80) :: initcond_file
+    character(len=80) :: initcond_file, traj_file
     integer :: ntrajs, itraj, maxcond, totalsteps
     real(dp) :: tottime, tstep, t, timein, timeout, ener, print_time, tprev
     real(dp), allocatable :: XP(:)
@@ -32,6 +32,7 @@ program QCT
 
 
     open(sal_unit, file="sal", status="replace")
+    open(end_unit, file="end_conditions", status="replace")
     relerr = 1.e-8_dp
     abserr = 1.e-8_dp
     print_time = 0._dp
@@ -66,7 +67,8 @@ program QCT
 
     do itraj=1, ntrajs
         tprev = 0._dp
-        open(xyz_unit, file="traj.xyz", status="replace")
+        write(traj_file,'("traj_",i6.6,".xyz")')itraj
+        open(xyz_unit, file=trim(traj_file), status="replace")
         call s%first_call()
         t = 0._dp
 
@@ -80,13 +82,16 @@ program QCT
         write(sal_unit,*) "Ener init/cm-1 =", ener * autocm_1
 
         call s%integrate(timein, XP, timeout, idid=idid, integration_mode=2)
+
         write(sal_unit,*) "Final time / fs:", timein * autofs
         call total_ener(XP, ener)
         write(sal_unit,*) "Ener end/cm-1 =", ener * autocm_1
         write(sal_unit,*) "End of traj =", itraj
+        write(end_unit,*) itraj, XP
         close(xyz_unit)
     end do
     close(sal_unit)
+    close(end_unit)
 
     contains 
 
