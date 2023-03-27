@@ -145,7 +145,7 @@ program QCT
             write(xyz_unit,*) nA
             write(xyz_unit,*) "t/fs, kinetic (au), pot (au)=", t * autofs, kener, potener
             do iat=1,nA
-                write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA
+                write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA, XP(ndim/2 + 3*(iat-1)+1:ndim/2 + 3*iat)
             end do
         end if
 
