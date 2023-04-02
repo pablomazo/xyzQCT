@@ -1,6 +1,6 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
-    use settings, only: ndim, nA, massA, atnameA
+    use settings, only: allocate_variables, ndim, nA, massA, atnameA, XP, XPini
     use hamiltonian, only: derivs, get_derivs
     use ddeabm_module, wp => ddeabm_rk
     implicit none
@@ -10,7 +10,6 @@ program QCT
     integer :: ntrajs, itraj, maxcond, totalsteps, idid, propagation_mode
     real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
                 potener, print_time, tprev, rfin, gval, Eini, Eend
-    real(dp), allocatable :: XP(:), XPini(:)
     integer, parameter :: cond_unit = 11
     logical :: open_unit
 
@@ -48,7 +47,7 @@ program QCT
     read(10, nml=input)
     ! Set X and P derivatives routine
     ndim = 2 * 3 * nA
-    allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA))
+    call allocate_variables()
     read(10, nml=mass)
     close(10)
     write(sal_unit, nml=input)
