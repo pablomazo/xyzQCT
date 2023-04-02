@@ -1,13 +1,13 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
-    use settings, only: allocate_variables, ndim, nA, massA, atnameA, XP, XPini
+    use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode
     use hamiltonian, only: derivs, get_derivs
     use ddeabm_module, wp => ddeabm_rk
     implicit none
 
     type(ddeabm_with_event_class) :: s
     character(len=80) :: initcond_file, traj_file
-    integer :: ntrajs, itraj, maxcond, totalsteps, idid, propagation_mode
+    integer :: ntrajs, itraj, maxcond, totalsteps, idid
     real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
                 potener, print_time, tprev, rfin, gval, Eini, Eend
     integer, parameter :: cond_unit = 11
@@ -29,11 +29,6 @@ program QCT
         propagation_mode
 
 
-    namelist /mass/ &
-        massA, &
-        atnameA
-
-
     open(sal_unit, file="sal", status="replace")
     open(end_unit, file="end_conditions", status="replace")
     gval = 0._dp
@@ -45,13 +40,11 @@ program QCT
 
     open(10,file="input.dat", status="old")
     read(10, nml=input)
-    ! Set X and P derivatives routine
-    ndim = 2 * 3 * nA
-    call allocate_variables()
-    read(10, nml=mass)
-    close(10)
     write(sal_unit, nml=input)
-    write(sal_unit, nml=mass)
+    call initial_settings()
+    close(10)
+
+    ! Set X and P derivatives routine
     call get_derivs(propagation_mode)
 
     ! Convert times
@@ -61,8 +54,6 @@ program QCT
     call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
         report=xyz_report, g=checkend, root_tol=1e-10_dp)
 
-    ! Convert mass
-    massA = massA/autouma
 
     open(cond_unit, file=trim(initcond_file), status="old")
     read(cond_unit,*) maxcond
