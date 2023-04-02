@@ -1,12 +1,13 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: ndim, nA, massA, atnameA
+    use hamiltonian, only: derivs, get_derivs
     use ddeabm_module, wp => ddeabm_rk
     implicit none
 
     type(ddeabm_with_event_class) :: s
     character(len=80) :: initcond_file, traj_file
-    integer :: ntrajs, itraj, maxcond, totalsteps, idid
+    integer :: ntrajs, itraj, maxcond, totalsteps, idid, propagation_mode
     real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
                 potener, print_time, tprev, rfin, gval, Eini, Eend
     real(dp), allocatable :: XP(:), XPini(:)
@@ -25,7 +26,9 @@ program QCT
         relerr, &
         abserr, &
         rfin, &
-        initcond_file
+        initcond_file, &
+        propagation_mode
+
 
     namelist /mass/ &
         massA, &
@@ -39,15 +42,18 @@ program QCT
     abserr = 1.e-8_dp
     print_time = 0._dp
     max_step_factor = 10._dp
+    propagation_mode = 0
 
     open(10,file="input.dat", status="old")
     read(10, nml=input)
+    ! Set X and P derivatives routine
     ndim = 2 * 3 * nA
     allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA))
     read(10, nml=mass)
     close(10)
     write(sal_unit, nml=input)
     write(sal_unit, nml=mass)
+    call get_derivs(propagation_mode)
 
     ! Convert times
     totalsteps = int(max_step_factor * tottime)
@@ -106,31 +112,6 @@ program QCT
     close(end_unit)
 
     contains 
-
-    subroutine derivs(me, t, XP, XPder)
-        implicit none
-
-        class(ddeabm_class), intent(inout) :: me
-        integer ::iat, ix
-        real(dp), intent(in) :: t, XP(:)
-        real(dp), intent(out) :: XPder(:)
-        real(dp) :: pot, posxyz(ndim/2), P(ndim/2), derxyz(ndim/2)
-
-        XPder = 0._dp
-        pot = 0._dp
-        derxyz = 0._dp
-        posxyz = 0._dp
-
-        posxyz = XP(:ndim/2)
-        P = XP(ndim/2+1:)
-        call potxyz(posxyz, pot, derxyz)
-        do iat=1,nA
-            do ix=1,3
-                XPder(3 * (iat-1) + ix) = P(3 * (iat-1) + ix) / massA(iat)
-                XPder(ndim/2 + 3 * (iat-1) + ix) = -derxyz(3 * (iat-1) + ix)
-            end do
-        end do
-    end subroutine derivs
 
     subroutine  xyz_report(me, t, XP)
         implicit none
