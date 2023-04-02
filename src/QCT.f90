@@ -1,16 +1,17 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
-    use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode
+    use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode, &
+        initcond_mode
     use hamiltonian, only: derivs, get_derivs
+    use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use ddeabm_module, wp => ddeabm_rk
     implicit none
 
     type(ddeabm_with_event_class) :: s
-    character(len=80) :: initcond_file, traj_file
+    character(len=80) :: traj_file
     integer :: ntrajs, itraj, maxcond, totalsteps, idid
     real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
                 potener, print_time, tprev, rfin, gval, Eini, Eend
-    integer, parameter :: cond_unit = 11
     logical :: open_unit
 
     !variables for ddeabm
@@ -26,7 +27,8 @@ program QCT
         abserr, &
         rfin, &
         initcond_file, &
-        propagation_mode
+        propagation_mode, &
+        initcond_mode
 
 
     open(sal_unit, file="sal", status="replace")
@@ -37,15 +39,15 @@ program QCT
     print_time = 0._dp
     max_step_factor = 10._dp
     propagation_mode = 0
+    initcond_mode = 0
 
     open(10,file="input.dat", status="old")
     read(10, nml=input)
     write(sal_unit, nml=input)
     call initial_settings()
+    call set_init_cond(initcond_mode) ! set initial conditions.
+    call get_derivs(propagation_mode) ! set propagation mode.
     close(10)
-
-    ! Set X and P derivatives routine
-    call get_derivs(propagation_mode)
 
     ! Convert times
     totalsteps = int(max_step_factor * tottime)
@@ -55,10 +57,6 @@ program QCT
         report=xyz_report, g=checkend, root_tol=1e-10_dp)
 
 
-    open(cond_unit, file=trim(initcond_file), status="old")
-    read(cond_unit,*) maxcond
-    rewind(cond_unit)
-    write(sal_unit,*) "Total number of initial conditions =", maxcond
 
     do itraj=1, ntrajs
         write(sal_unit,"(/A)") '---------------'
@@ -71,7 +69,7 @@ program QCT
         t = 0._dp
 
         write(sal_unit,*) "Starting traj =", itraj
-        call get_init_cond(ndim, XPini, maxcond, cond_unit)
+        call get_init_cond(XPini)
         XP = XPini
 
         timein = 0._dp
@@ -146,28 +144,6 @@ program QCT
         end do outer
     end subroutine
 end program
-
-subroutine get_init_cond(ndim, XP, maxcond, cond_unit)
-    use constants, only: dp, sal_unit
-    implicit none
-    integer, intent(in) :: ndim, maxcond, cond_unit
-    real(dp), intent(inout) :: XP(ndim)
-    real(dp) :: r
-    integer :: icond, i 
-
-    XP(:) = 0._dp
-
-    call RANDOM_NUMBER(r)
-    icond = floor(maxcond * r + 1)
-    write(sal_unit,*) "Using icond =", icond
-
-    read(cond_unit, *)
-    do i=1, icond
-        read(cond_unit, *) XP
-    end do
-    rewind(cond_unit)
-end subroutine
-
 
 subroutine total_ener(XP, k, pot)
     use constants, only: dp

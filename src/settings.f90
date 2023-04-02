@@ -1,7 +1,7 @@
 module settings
       use constants, only: dp, autouma, sal_unit
       implicit none
-      integer, public :: nA, ndim, nfreqs, propagation_mode
+      integer, public :: nA, ndim, nfreqs, propagation_mode, initcond_mode
       real(dp), allocatable :: XP(:), XPini(:), massA(:), Xeq(:), CXQ(:,:), freqs(:)
       character(len=2), allocatable :: atnameA(:)
 
