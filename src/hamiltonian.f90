@@ -1,5 +1,5 @@
 module hamiltonian
-    use constants, only: dp, sal_unit
+    use constants, only: dp, sal_unit, pi
     use ddeabm_module, wp => ddeabm_rk
     use settings, only: ndim, nA, massA
     implicit none
@@ -25,6 +25,10 @@ module hamiltonian
             case(1)
                 write(sal_unit,"(/A/)") "Using NM potential."
                 potential => NMpotential
+            case(2)
+                write(sal_unit,"(/A/)") "Adiabatic switching"
+                potential => adiabatic_switching
+
         end select
     end subroutine get_potential
 
@@ -96,6 +100,27 @@ module hamiltonian
         end do
         pot = pot / 2._dp
     end subroutine NMpotential
+
+    subroutine adiabatic_switching(t, posxyz, pot, derxyz)
+        use settings, only: Ts
+        implicit none
+        real(dp), intent(in) :: t, posxyz(ndim/2)
+        real(dp), intent(out) :: pot, derxyz(ndim/2)
+        real(dp) :: der1(ndim/2), der2(ndim/2), pot1, pot2, s
+
+        call userpot(t, posxyz, pot1, der1)
+        if (t <= Ts) then
+            call NMpotential(t, posxyz, pot2, der2)
+            s = t / Ts - 1._dp / (2._dp * pi) * sin(2._dp * t / Ts)
+        else
+            pot2 = 0._dp
+            der2 = 0._dp
+            s = 1._dp
+        end if
+
+        pot = (1._dp - s) * pot2 + s * pot1
+        derxyz = (1._dp - s) * der2 + s * der1
+    end subroutine adiabatic_switching
 
     subroutine kinetic_ener(P, E)
         use constants, only: dp, sal_unit

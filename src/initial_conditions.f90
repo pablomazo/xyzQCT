@@ -82,12 +82,10 @@ module initial_conditions
                 mass = sqrt(massA((ix-1)/ 3 + 1))
                 do ifreq=1, nfreqs
                     XP(ix) = XP(ix) + Q(ifreq) * CXQ(ix, ifreq)
-                    write(sal_unit, *) ix, ifreq, Q(ifreq), CXQ(ix, ifreq)
                     XP(ix+ndim/2) = XP(ix+ndim/2) + P(ifreq) * CXQ(ix, ifreq)
                 end do
                 XP(ix) = XP(ix) / mass
                 XP(ndim/2 + ix) = XP(ndim/2 + ix) * mass
-                write(sal_unit, *) ix, XP(ix), XP(ix+ndim/2)
             end do
             XP(:ndim/2) = XP(:ndim/2) + Xeq
         end subroutine

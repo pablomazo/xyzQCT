@@ -5,6 +5,7 @@ module settings
       integer :: ios
       integer, allocatable :: Qnum(:)
       real(dp), allocatable :: XP(:), XPini(:), massA(:), Xeq(:), CXQ(:,:), freqs(:), amp(:)
+      real(dp) :: Ts
       character(len=2), allocatable :: atnameA(:)
 
       namelist /mass/ &

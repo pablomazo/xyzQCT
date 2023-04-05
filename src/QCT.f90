@@ -1,7 +1,7 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode, &
-        initcond_mode
+        initcond_mode, Ts
     use hamiltonian, only: derivs, get_potential
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use ddeabm_module, wp => ddeabm_rk
@@ -28,7 +28,8 @@ program QCT
         rfin, &
         initcond_file, &
         propagation_mode, &
-        initcond_mode
+        initcond_mode, &
+        Ts
 
 
     open(sal_unit, file="sal", status="replace")
@@ -40,6 +41,7 @@ program QCT
     max_step_factor = 10._dp
     propagation_mode = 0
     initcond_mode = 0
+    Ts = 0._dp
 
     open(10,file="input.dat", status="old")
     read(10, nml=input)
