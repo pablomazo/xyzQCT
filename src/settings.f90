@@ -8,7 +8,7 @@ module settings
       real(dp) :: Ts
       character(len=2), allocatable :: atnameA(:)
 
-      namelist /mass/ &
+      namelist /systemA/ &
             massA, &
             atnameA
       contains
@@ -17,9 +17,9 @@ module settings
           ndim = 2 * 3 * nA
           allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA), Xeq(ndim/2))
 
-          read(10, nml=mass, iostat=ios)
-          if (ios .ne. 0) write(sal_unit, *) "Namelist mass not found"
-          write(sal_unit, nml=mass)
+          read(10, nml=systemA, iostat=ios)
+          if (ios .ne. 0) write(sal_unit, *) "Namelist systemA not found"
+          write(sal_unit, nml=systemA)
           massA = massA/autouma
       end subroutine initial_settings
 
