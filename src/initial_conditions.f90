@@ -115,7 +115,7 @@ module initial_conditions
           read(10, nml=Qvib, iostat=ios)
           if (ios .ne. 0) write(sal_unit, *) "Namelist Qvib not found"
           write(sal_unit, nml=Qvib)
-          amp = sqrt(2 * (1._dp * Qnum +1._dp) / freqs) ! Maximum NM amplitudes
+          amp = sqrt((2._dp * Qnum +1._dp) / freqs) ! Maximum NM amplitudes
           write(sal_unit, *) "Qnum, freqs, amp "
           do ifreq=1,nfreqs
               write(sal_unit, *) Qnum(ifreq), freqs(ifreq), amp(ifreq)
