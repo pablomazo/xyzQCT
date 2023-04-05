@@ -2,7 +2,7 @@ program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode, &
         initcond_mode
-    use hamiltonian, only: derivs, get_derivs
+    use hamiltonian, only: derivs, get_potential
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use ddeabm_module, wp => ddeabm_rk
     implicit none
@@ -46,7 +46,7 @@ program QCT
     write(sal_unit, nml=input)
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
-    call get_derivs(propagation_mode) ! set propagation mode.
+    call get_potential(propagation_mode) ! set propagation mode.
     close(10)
 
     ! Convert times
@@ -74,7 +74,7 @@ program QCT
 
         timein = 0._dp
         timeout = tottime
-        call total_ener(XP, kener, potener)
+        call total_ener(timein, XP, kener, potener)
         Eini = (kener + potener) * autocm_1
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
         if (idid .eq. -1) then
@@ -84,7 +84,7 @@ program QCT
             write(sal_unit,"(A)") "Increase either parameter in the input to increase the maximum number of steps"
             write(sal_unit,"(A/)") "*******************************************"
         end if
-        call total_ener(XP, kener, potener)
+        call total_ener(timeout, XP, kener, potener)
         Eend = (kener + potener) * autocm_1
         write(sal_unit,*) "Ener(initial) / cm-1:", Eini
         write(sal_unit,*) "Ener(final) / cm-1  :", Eend
@@ -109,12 +109,12 @@ program QCT
         real(dp) :: kener, potener
 
         if (t - tprev > print_time .and. print_time > 0._dp) then
-            call total_ener(XP, kener, potener)
+            call total_ener(t, XP, kener, potener)
             tprev = t
             write(xyz_unit,*) nA
             write(xyz_unit,*) "t/fs, kinetic (au), pot (au)=", t * autofs, kener, potener
             do iat=1,nA
-                write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA, XP(ndim/2 + 3*(iat-1)+1:ndim/2 + 3*iat)
+                write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA!, XP(ndim/2 + 3*(iat-1)+1:ndim/2 + 3*iat)
             end do
         end if
 
@@ -145,34 +145,15 @@ program QCT
     end subroutine
 end program
 
-subroutine total_ener(XP, k, pot)
+subroutine total_ener(t, XP, k, pot)
     use constants, only: dp
     use settings, only: ndim
+    use hamiltonian, only: potential, kinetic_ener
     implicit none
-    real(dp), intent(in) :: XP(ndim)
+    real(dp), intent(in) :: t, XP(ndim)
     real(dp), intent(out) :: k, pot
     real(dp) :: der(ndim/2)
 
     call kinetic_ener(XP(ndim/2+1:), k)
-    call potxyz(XP(:ndim/2), pot, der)
+    call potential(t, XP(:ndim/2), pot, der)
 end subroutine
-
-subroutine kinetic_ener(P, E)
-    use constants, only: dp, sal_unit
-    use settings, only: ndim, nA, massA
-    implicit none
-    integer :: iat, ix
-    real(dp), intent(in) :: P(ndim/2)
-    real(dp), intent(out) :: E
-
-    E = 0._dp
-
-    do iat=1,nA
-        do ix=1,3
-            E = E + P(3*(iat-1)+ix)**2 / massA(iat)
-        end do
-    end do
-    E = E / 2._dp
-end subroutine
-
-
