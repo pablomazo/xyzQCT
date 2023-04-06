@@ -139,4 +139,16 @@ module hamiltonian
         end do
         E = E / 2._dp
     end subroutine
+
+    subroutine total_ener(t, XP, k, pot)
+        use constants, only: dp
+        use settings, only: ndim
+        implicit none
+        real(dp), intent(in) :: t, XP(ndim)
+        real(dp), intent(out) :: k, pot
+        real(dp) :: der(ndim/2)
+
+        call kinetic_ener(XP(ndim/2+1:), k)
+        call potential(t, XP(:ndim/2), pot, der)
+    end subroutine
 end module hamiltonian

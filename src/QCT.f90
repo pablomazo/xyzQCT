@@ -2,7 +2,7 @@ program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode, &
         initcond_mode, Ts
-    use hamiltonian, only: derivs, get_potential
+    use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use ddeabm_module, wp => ddeabm_rk
     implicit none
@@ -146,16 +146,3 @@ program QCT
         end do outer
     end subroutine
 end program
-
-subroutine total_ener(t, XP, k, pot)
-    use constants, only: dp
-    use settings, only: ndim
-    use hamiltonian, only: potential, kinetic_ener
-    implicit none
-    real(dp), intent(in) :: t, XP(ndim)
-    real(dp), intent(out) :: k, pot
-    real(dp) :: der(ndim/2)
-
-    call kinetic_ener(XP(ndim/2+1:), k)
-    call potential(t, XP(:ndim/2), pot, der)
-end subroutine
