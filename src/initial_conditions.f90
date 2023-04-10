@@ -26,7 +26,6 @@ module initial_conditions
         subroutine set_init_cond(mode)
             implicit none
             integer :: mode
-            real(dp) :: phase(ndim/2)
 
             select case(mode)
                 case(0)
@@ -72,7 +71,7 @@ module initial_conditions
 
             call RANDOM_NUMBER(phase)
             XP = 0._dp
-            phase = pi * phase
+            phase = 2._dp * pi * phase
             write(sal_unit, *) "Initial phase:", phase
             Q = amp * sin(freqs * phase)
             P = freqs * amp * cos(freqs * phase)
