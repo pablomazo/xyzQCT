@@ -28,13 +28,11 @@ module hamiltonian
             case(2)
                 write(sal_unit,"(/A/)") "Adiabatic switching"
                 potential => adiabatic_switching
-
         end select
     end subroutine get_potential
 
     subroutine derivs(me, t, XP, XPder)
         implicit none
-
         class(ddeabm_class), intent(inout) :: me
         integer ::iat, ix
         real(dp), intent(in) :: t, XP(:)

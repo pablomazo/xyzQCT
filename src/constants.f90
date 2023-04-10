@@ -3,9 +3,10 @@ module constants
       integer, parameter :: dp = kind(1d0), &
                             sal_unit = 90, &
                             xyz_unit = 91, &
-                            end_unit = 92
+                            end_unit = 92, &
+                            cond_unit = 100
       real(dp),parameter,public :: autofs=2.41888e-2_dp, &
-                                   autoA=0.529177, &
+                                   autoA=0.529177_dp, &
                                    autokg=9.10939e-31_dp, &
                                    autouma=5.4858e-4_dp, &
                                    autocm_1=219474.625_dp, &

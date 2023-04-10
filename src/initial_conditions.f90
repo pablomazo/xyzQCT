@@ -1,9 +1,8 @@
 module initial_conditions
-    use constants, only: dp, sal_unit, pi
+    use constants, only: dp, sal_unit, cond_unit, pi
     use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA
     implicit none
     character(len=80) :: initcond_file
-    integer, parameter :: cond_unit = 100
     integer :: init_cond_mode, max_cond
 
     namelist /Qvib/ &
