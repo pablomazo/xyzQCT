@@ -4,6 +4,7 @@ program QCT
         initcond_mode, Ts
     use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
+    use physics, only: get_COM, get_LMOM_AMOM
     use ddeabm_module, wp => ddeabm_rk
     implicit none
 
@@ -11,11 +12,10 @@ program QCT
     character(len=80) :: traj_file
     integer :: ntrajs, itraj, maxcond, totalsteps, idid
     real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
-                potener, print_time, tprev, rfin, gval, Eini, Eend
+                potener, print_time, tprev, rfin, gval, Eini, Eend, &
+                relerr,abserr, &
+                QCOM(3), PCOM(3), LMOM(3), AMOM(3)
     logical :: open_unit
-
-    !variables for ddeabm
-    real(8) :: relerr,abserr !absolute and relative error in propagation
 
     namelist /input/ &
         ntrajs, &
@@ -31,9 +31,7 @@ program QCT
         initcond_mode, &
         Ts
 
-
-    open(sal_unit, file="sal", status="replace")
-    open(end_unit, file="end_conditions", status="replace")
+    ! Defaults
     gval = 0._dp
     relerr = 1.e-8_dp
     abserr = 1.e-8_dp
@@ -43,12 +41,14 @@ program QCT
     initcond_mode = 0
     Ts = 0._dp
 
+    open(sal_unit, file="sal", status="replace")
+    open(end_unit, file="end_conditions", status="replace")
     open(10,file="input.dat", status="old")
     read(10, nml=input)
     write(sal_unit, nml=input)
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
-    call get_potential(propagation_mode) ! set propagation mode.
+    call get_potential(propagation_mode)
     close(10)
 
     ! Convert times
@@ -57,8 +57,6 @@ program QCT
     print_time=print_time/autofs
     call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
         report=xyz_report, g=checkend, root_tol=1e-10_dp)
-
-
 
     do itraj=1, ntrajs
         write(sal_unit,"(/A)") '---------------'
@@ -77,7 +75,13 @@ program QCT
         timein = 0._dp
         timeout = tottime
         call total_ener(timein, XP, kener, potener)
+        call get_COM(ndim, XP, 1, nA, massA, QCOM, PCOM)
+        call get_LMOM_AMOM(ndim, XP, 1, nA, massA, QCOM, PCOM, LMOM, AMOM)
         Eini = (kener + potener) * autocm_1
+        write(sal_unit,*) "Ener(initial) / cm-1:", Eini
+        write(sal_unit,*) "              COM / au:", QCOM
+        write(sal_unit,*) "  Linear momentum / au:", PCOM
+        write(sal_unit,*) " Angular momentum / au:", AMOM
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
         if (idid .eq. -1) then
             write(sal_unit,"(/A)") "*******************************************"
@@ -87,9 +91,13 @@ program QCT
             write(sal_unit,"(A/)") "*******************************************"
         end if
         call total_ener(timeout, XP, kener, potener)
+        call get_COM(ndim, XP, 1, nA, massA, QCOM, PCOM)
+        call get_LMOM_AMOM(ndim, XP, 1, nA, massA, QCOM, PCOM, LMOM, AMOM)
         Eend = (kener + potener) * autocm_1
-        write(sal_unit,*) "Ener(initial) / cm-1:", Eini
         write(sal_unit,*) "Ener(final) / cm-1  :", Eend
+        write(sal_unit,*) "              COM / au:", QCOM
+        write(sal_unit,*) "  Linear momentum / au:", LMOM
+        write(sal_unit,*) " Angular momentum / au:", AMOM
         write(sal_unit,*) "Ener(delta) / cm-1  :", Eend - Eini
         write(sal_unit,*) "Final time / fs:", timein * autofs
         write(sal_unit,*) "End of traj =", itraj
@@ -116,7 +124,7 @@ program QCT
             write(xyz_unit,*) nA
             write(xyz_unit,*) "t/fs, kinetic (au), pot (au)=", t * autofs, kener, potener
             do iat=1,nA
-                write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA!, XP(ndim/2 + 3*(iat-1)+1:ndim/2 + 3*iat)
+                write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA, XP(ndim/2 + 3*(iat-1)+1:ndim/2 + 3*iat)
             end do
         end if
 

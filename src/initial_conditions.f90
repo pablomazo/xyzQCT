@@ -72,6 +72,7 @@ module initial_conditions
             call RANDOM_NUMBER(phase)
             XP = 0._dp
             phase = 2._dp * pi * phase
+            phase = 0._dp
             write(sal_unit, *) "Initial phase:", phase
             Q = amp * sin(freqs * phase)
             P = freqs * amp * cos(freqs * phase)
