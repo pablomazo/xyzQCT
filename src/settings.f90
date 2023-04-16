@@ -1,5 +1,5 @@
 module settings
-      use constants, only: dp, autouma, sal_unit
+      use constants, only: dp, autouma, sal_unit, get_mass
       implicit none
       integer, public :: nA, ndim, nfreqs, propagation_mode, initcond_mode
       integer :: ios
@@ -14,11 +14,19 @@ module settings
       contains
       subroutine initial_settings()
           implicit none
+          integer :: iat
           ndim = 2 * 3 * nA
           allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA), Xeq(ndim/2))
+          massA = 0._dp
 
           read(10, nml=systemA, iostat=ios)
           if (ios .ne. 0) write(sal_unit, *) "Namelist systemA not found"
+          do iat=1, nA
+             if (massA(iat) == 0._dp) then
+                 call get_mass(atnameA(iat), massA(iat))
+                 if (massA(iat) == -1.0_dp) stop
+             end if
+          end do
           write(sal_unit, nml=systemA)
           massA = massA/autouma
       end subroutine initial_settings
