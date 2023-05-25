@@ -61,6 +61,7 @@ program QCT
         report=xyz_report, g=checkend, root_tol=1e-10_dp)
 
     do itraj=1, ntrajs
+        flush(sal_unit)
         write(sal_unit,"(/A)") '---------------'
         tprev = 0._dp
         if (print_time > 0._dp) then
