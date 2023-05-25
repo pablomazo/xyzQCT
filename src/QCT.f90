@@ -40,6 +40,7 @@ program QCT
     propagation_mode = 0
     initcond_mode = 0
     Ts = 0._dp
+    initcond_file = ""
 
     open(sal_unit, file="sal", status="replace")
     open(end_unit, file="end_conditions", status="replace")
