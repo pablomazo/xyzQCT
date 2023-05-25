@@ -3,9 +3,9 @@ module settings
       implicit none
       integer, public :: nA, ndim, nfreqs, propagation_mode, initcond_mode
       integer :: ios
-      integer, allocatable :: Qnum(:)
+      integer, allocatable :: Qnum(:), Qmax(:)
       real(dp), allocatable :: XP(:), XPini(:), massA(:), Xeq(:), CXQ(:,:), freqs(:), amp(:)
-      real(dp) :: Ts
+      real(dp) :: Ts, temperature
       character(len=2), allocatable :: atnameA(:)
 
       namelist /systemA/ &

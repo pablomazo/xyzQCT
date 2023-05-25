@@ -1,6 +1,6 @@
 module initial_conditions
-    use constants, only: dp, sal_unit, cond_unit, pi
-    use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA
+    use constants, only: dp, sal_unit, cond_unit
+    use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature
     implicit none
     character(len=80) :: initcond_file
     integer :: init_cond_mode, max_cond
@@ -41,6 +41,13 @@ module initial_conditions
                     call read_Data4NM(11)
                     close(11)
                     get_init_cond => NM_init_cond
+                case(2)
+                    write(sal_unit, "(/A)") "Using NM initial conditions (sampled at temperature T)"
+                    open(11, file="Data4NM.dat", status="old")
+                    call read_Data4NM(11)
+                    close(11)
+                    call compute_Qmax(temperature, Qmax)
+                    get_init_cond => NM_init_cond_T
             end select 
         end subroutine
 
@@ -64,15 +71,20 @@ module initial_conditions
         end subroutine
 
         subroutine NM_init_cond(XP)
+            use constants, only: pi
             implicit none
             integer :: ix, ifreq
             real(dp), intent(out) :: XP(ndim)
             real(dp) :: phase(nfreqs), Q(nfreqs), P(nfreqs), mass
 
+            amp = sqrt((2._dp * Qnum +1._dp) / freqs) ! Maximum NM amplitudes
+            write(sal_unit, *) "Qnum", Qnum
+            write(sal_unit, *) "freqs", freqs
+            write(sal_unit, *) "Amplitude", amp
+
             call RANDOM_NUMBER(phase)
             XP = 0._dp
             phase = 2._dp * pi * phase
-            phase = 0._dp
             write(sal_unit, *) "Initial phase:", phase
             Q = amp * sin(freqs * phase)
             P = freqs * amp * cos(freqs * phase)
@@ -89,11 +101,33 @@ module initial_conditions
             XP(:ndim/2) = XP(:ndim/2) + Xeq
         end subroutine
 
+        subroutine NM_init_cond_T(XP)
+            use constants, only: h, c, kb, autocm_1
+            use settings, only: Qmax, temperature
+            implicit none
+            integer :: imode, ii
+            real(dp), intent(out) :: XP(ndim)
+            real(dp) :: rand1, rand2, factor, prob
+
+            ! Sample the values of Qnum for temperature T
+            do imode = 1, nfreqs
+                factor = h *  freqs(imode) * autocm_1 * 100 * c / (kb * temperature)
+                do ii=1,1000
+                call random_number(rand1)
+                call random_number(rand2)
+                Qnum(imode) = floor((Qmax(imode) + 1) * rand1)
+                prob = exp(-Qnum(imode) * factor) * (1. - exp(-factor))
+                if (rand2 < prob) exit
+                end do
+            end do
+            call NM_init_cond(XP)
+        end subroutine
+
       subroutine read_Data4NM(read_unit)
           use constants, only: autoA, autocm_1
           implicit none
           integer, intent(in) :: read_unit
-          integer :: iat, ix, ifreq, ios
+          integer :: iat, ix, ios
 
           read(read_unit, *)
           read(read_unit, *)
@@ -102,7 +136,7 @@ module initial_conditions
           end do
           Xeq = Xeq / autoA
           read(read_unit, *) nfreqs
-          allocate(freqs(nfreqs), CXQ(3*nA, nfreqs), Qnum(nfreqs), amp(nfreqs))
+          allocate(freqs(nfreqs), CXQ(3*nA, nfreqs), Qnum(nfreqs), amp(nfreqs), Qmax(nfreqs))
           read(read_unit, *) freqs
           do ix=1, 3*nA
               read(read_unit,*) CXQ(ix,:)
@@ -112,10 +146,27 @@ module initial_conditions
           read(10, nml=Qvib, iostat=ios)
           if (ios .ne. 0) write(sal_unit, *) "Namelist Qvib not found"
           write(sal_unit, nml=Qvib)
-          amp = sqrt((2._dp * Qnum +1._dp) / freqs) ! Maximum NM amplitudes
-          write(sal_unit, *) "Qnum, freqs, amp "
-          do ifreq=1,nfreqs
-              write(sal_unit, *) Qnum(ifreq), freqs(ifreq), amp(ifreq)
-          end do
       end subroutine read_Data4NM
+
+      subroutine compute_Qmax(T, Qmax)
+          use constants, only: h, c, kb, autocm_1
+          implicit none
+          real(dp), intent(in) :: T
+          integer, intent(out) :: Qmax(nfreqs)
+          integer :: ifreq, iv
+          real(dp) :: prob, factor
+          integer, parameter :: maxv = 100
+          real(dp), parameter :: threshold = 1.e-3_dp
+
+          Qmax = 0
+          do ifreq=1, nfreqs
+              factor = h *  freqs(ifreq) * autocm_1 * 100 * c / (kb * T)
+              do iv=1,maxv
+                  prob = exp(-iv * factor) * (1. - exp(-factor))
+                  if (prob .lt. threshold) exit
+              end do
+              Qmax(ifreq) = iv
+          end do
+          write(sal_unit, *) "Qmax =", Qmax
+      end subroutine
 end module initial_conditions

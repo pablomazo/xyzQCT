@@ -1,7 +1,7 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode, &
-        initcond_mode, Ts
+        initcond_mode, Ts, temperature
     use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use physics, only: get_COM, get_LMOM_AMOM
@@ -29,7 +29,8 @@ program QCT
         initcond_file, &
         propagation_mode, &
         initcond_mode, &
-        Ts
+        Ts, &
+        temperature
 
     ! Defaults
     gval = 0._dp
