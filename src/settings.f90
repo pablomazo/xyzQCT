@@ -19,6 +19,7 @@ module settings
           allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA), Xeq(ndim/2))
           massA = 0._dp
 
+          call setpotxyz
           read(10, nml=systemA, iostat=ios)
           if (ios .ne. 0) write(sal_unit, *) "Namelist systemA not found"
           do iat=1, nA
