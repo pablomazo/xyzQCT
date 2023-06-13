@@ -125,7 +125,7 @@ program QCT
             call total_ener(t, XP, kener, potener)
             tprev = t
             write(xyz_unit,*) nA
-            write(xyz_unit,*) "t/fs, kinetic (au), pot (au)=", t * autofs, kener, potener
+            write(xyz_unit,*) t * autofs, kener, potener, " = t/fs, kinetic (au), pot (au)"
             do iat=1,nA
                 write(xyz_unit,*) atnameA(iat), XP(3*(iat-1)+1:3*iat) * autoA
             end do
