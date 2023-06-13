@@ -10,7 +10,7 @@ program QCT
 
     type(ddeabm_with_event_class) :: s
     character(len=80) :: traj_file
-    integer :: ntrajs, itraj, maxcond, totalsteps, idid
+    integer :: ntrajs, itraj, maxcond, totalsteps, idid, time_init, time_end, time_rate
     real(dp) :: tottime, t, timein, timeout, kener, max_step_factor, &
                 potener, print_time, tprev, rfin, gval, Eini, Eend, &
                 relerr,abserr, &
@@ -85,7 +85,9 @@ program QCT
         write(sal_unit,*) "              COM / au:", QCOM
         write(sal_unit,*) "  Linear momentum / au:", PCOM
         write(sal_unit,*) " Angular momentum / au:", AMOM
+        call system_clock(time_init, time_rate)
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
+        call system_clock(time_end)
         if (idid .eq. -1) then
             write(sal_unit,"(/A)") "*******************************************"
             write(sal_unit,"(A)") "ERROR: Maximum number of integration steps reached."
@@ -104,6 +106,7 @@ program QCT
         write(sal_unit,*) "Ener(delta) / cm-1  :", Eend - Eini
         write(sal_unit,*) "Final time / fs:", timein * autofs
         write(sal_unit,*) "End of traj =", itraj
+        write(sal_unit,*) "Time elapsed / s:", real(time_end - time_init) / real(time_rate)
         write(end_unit,*) itraj, XPini, XP
         inquire(unit=xyz_unit, opened=open_unit)
         if (open_unit) close(xyz_unit)
