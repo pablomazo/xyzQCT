@@ -56,6 +56,7 @@ program QCT
     ! Convert times
     totalsteps = int(max_step_factor * tottime)
     tottime=tottime/autofs
+    Ts = Ts/autofs
     print_time=print_time/autofs
     call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
         report=xyz_report, g=checkend, root_tol=1e-10_dp)

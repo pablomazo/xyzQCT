@@ -109,7 +109,7 @@ module hamiltonian
         call userpot(t, posxyz, pot1, der1)
         if (t <= Ts) then
             call NMpotential(t, posxyz, pot2, der2)
-            s = t / Ts - 1._dp / (2._dp * pi) * sin(2._dp * t / Ts)
+            s = t / Ts - 1._dp / (2._dp * pi) * sin(2._dp * pi * t / Ts)
         else
             pot2 = 0._dp
             der2 = 0._dp
