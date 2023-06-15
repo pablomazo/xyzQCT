@@ -86,6 +86,7 @@ program QCT
         write(sal_unit,*) "              COM / au:", QCOM
         write(sal_unit,*) "  Linear momentum / au:", PCOM
         write(sal_unit,*) " Angular momentum / au:", AMOM
+        call flush(sal_unit)
         call system_clock(time_init, time_rate)
         call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
         call system_clock(time_end)
