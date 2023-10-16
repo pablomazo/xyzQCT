@@ -1,6 +1,6 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
-    use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, propagation_mode, &
+    use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, potential_mode, &
         initcond_mode, Ts, temperature
     use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
@@ -27,7 +27,7 @@ program QCT
         abserr, &
         rfin, &
         initcond_file, &
-        propagation_mode, &
+        potential_mode, &
         initcond_mode, &
         Ts, &
         temperature
@@ -38,7 +38,7 @@ program QCT
     abserr = 1.e-8_dp
     print_time = 0._dp
     max_step_factor = 10._dp
-    propagation_mode = 0
+    potential_mode = 0
     initcond_mode = 0
     Ts = 0._dp
     initcond_file = ""
@@ -50,7 +50,7 @@ program QCT
     write(sal_unit, nml=input)
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
-    call get_potential(propagation_mode)
+    call get_potential(potential_mode)
     close(10)
 
     ! Convert times

@@ -1,7 +1,7 @@
 module settings
       use constants, only: dp, autouma, sal_unit, get_mass
       implicit none
-      integer, public :: nA, ndim, nfreqs, propagation_mode, initcond_mode
+      integer, public :: nA, ndim, nfreqs, potential_mode, initcond_mode
       integer :: ios
       integer, allocatable :: Qnum(:), Qmax(:)
       real(dp), allocatable :: XP(:), XPini(:), massA(:), Xeq(:), CXQ(:,:), freqs(:), amp(:)
