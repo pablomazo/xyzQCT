@@ -1,7 +1,7 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
     use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, potential_mode, &
-        initcond_mode, Ts, temperature
+        initcond_mode, Ts, temperature, propagator_mode
     use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use physics, only: get_COM, get_LMOM_AMOM
@@ -26,6 +26,7 @@ program QCT
         initcond_file, &
         potential_mode, &
         initcond_mode, &
+        propagator_mode, &
         Ts, &
         temperature, &
         init_cond_print
@@ -33,6 +34,7 @@ program QCT
     ! Defaults
     potential_mode = 0
     initcond_mode = 0
+    propagator_mode = 0
     Ts = 0._dp
     initcond_file = ""
     init_cond_print = 0._dp
@@ -42,15 +44,15 @@ program QCT
     open(end_unit, file="end_conditions", status="replace")
     open(10,file="input.dat", status="old")
     read(10, nml=input)
+    write(sal_unit, nml=input)
     ! Convert times
     Ts = Ts/autofs
     tottime=tottime/autofs
     print_time=print_time/autofs
-    write(sal_unit, nml=input)
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
     call get_potential(potential_mode)
-    call set_propagator(0, tottime, print_time, rfin)
+    call set_propagator(propagator_mode, tottime, print_time, rfin)
     close(10)
 
 

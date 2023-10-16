@@ -3,7 +3,7 @@ module propagator
     use ddeabm_module, wp => ddeabm_rk
     use settings, only: ndim
     type(ddeabm_with_event_class) :: s
-    real(dp) :: gval, relerr, abserr, tottime, tprev, rfin, print_time
+    real(dp) :: gval, relerr, abserr, tottime, tprev, rfin, print_time, deltat, deltat2
     integer :: max_step_factor, iprop
 
     public :: xyz_report, checkend
@@ -22,6 +22,12 @@ module propagator
                 case(0)
                     write(sal_unit,"(/A/)") "Using DDEABM propagator."
                     call set_DDEABM_propagator()
+                case(1)
+                    write(sal_unit,"(/A/)") "Using Verlet propagator."
+                    call set_verlet_propagator()
+                case default
+                    write(sal_unit,"(/A/)") "Unknown propagator."
+                    stop
             end select
         end subroutine
 
@@ -32,6 +38,8 @@ module propagator
             select case(iprop)
                 case(0)
                     call propagate_DDEABM(XP, final_t, elapsed)
+                case(1)
+                    call propagate_verlet(XP, final_t, elapsed)
             end select
         end subroutine
 
@@ -41,6 +49,8 @@ module propagator
             select case(iprop)
                 case(0)
                     call s%first_call()
+                case(1)
+                    call reset_verlet()
             end select
         end subroutine
 
@@ -82,6 +92,55 @@ module propagator
             end if
             elapsed = real(time_end - time_init) / real(time_rate)
             final_t = timein
+        end subroutine
+
+        subroutine set_verlet_propagator()
+            use constants, only: autofs
+            implicit none
+            integer :: ios
+            namelist/propagator/ deltat
+            deltat = 1._dp
+            rewind(10)
+            read(10, nml=propagator, iostat=ios)
+            write(sal_unit, nml=propagator)
+            deltat = deltat / autofs
+            deltat2 = deltat / 2._dp
+        end subroutine
+
+        subroutine propagate_verlet(XP, final_t, elapsed)
+            use hamiltonian, only: derivs
+            use settings, only: nA, massA
+            implicit none
+            real(dp), intent(inout) :: XP(ndim)
+            real(dp), intent(out) :: elapsed, final_t
+            real(dp) :: time, XPder(ndim), is_end, mass_(ndim/2)
+            integer :: numsteps, istep, iat
+            integer :: time_init, time_rate, time_end
+
+            numsteps = int(tottime / deltat) + 1
+            do iat=1,nA
+                mass_(3*(iat-1)+1:3*iat) = massA(iat)
+            end do
+
+            call system_clock(time_init, time_rate)
+            time = 0._dp
+            call derivs(s, time, XP, XPder)
+            do istep=1, numsteps
+                time = (istep - 1) * deltat
+                XP(ndim/2+1:) = XP(ndim/2+1:) + deltat2 * XPder(ndim/2+1:)
+                XP(:ndim/2) = XP(:ndim/2) + deltat * XP(ndim/2+1:) / mass_
+                call derivs(s, time, XP, XPder)
+                XP(ndim/2+1:) = XP(ndim/2+1:) + deltat2 * XPder(ndim/2+1:)
+                call xyz_report(s, time, XP)
+                call checkend(s, time, XP, is_end)
+                if (is_end .eq. 0._dp) exit
+            end do
+            call system_clock(time_end)
+            elapsed = real(time_end - time_init) / real(time_rate)
+            final_t = time
+        end subroutine
+
+        subroutine reset_verlet()
         end subroutine
 
         subroutine xyz_report(me, t, XP)
