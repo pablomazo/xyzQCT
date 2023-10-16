@@ -7,6 +7,7 @@ program QCT
     use physics, only: get_COM, get_LMOM_AMOM
     use propagator, only: set_propagator, propagate, reset_propagator
     use ddeabm_module, wp => ddeabm_rk
+    use utils, only: code_starter
     implicit none
 
     character(len=80) :: traj_file
@@ -44,6 +45,7 @@ program QCT
     open(end_unit, file="end_conditions", status="replace")
     open(10,file="input.dat", status="old")
     read(10, nml=input)
+    call code_starter()
     write(sal_unit, nml=input)
     ! Convert times
     Ts = Ts/autofs
