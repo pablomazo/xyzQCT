@@ -5,6 +5,9 @@ module initial_conditions
     character(len=80) :: initcond_file
     integer :: init_cond_mode, max_cond
 
+    private :: init_cond_mode
+
+
     namelist /Qvib/ &
         Qnum
 
@@ -12,21 +15,13 @@ module initial_conditions
     ! init_cond_mode:
     ! 0 => Read from file
     ! 1 => NM initial condition
-
-    abstract interface
-        subroutine get_init_cond_base(XP)
-            use constants, only : dp 
-            use settings, only : ndim
-            real(dp), intent(out) :: XP(ndim)
-        end subroutine get_init_cond_base
-    end interface
-    procedure(get_init_cond_base), pointer :: get_init_cond => null()
+    ! 2 => NM initial condition (sampled at temperature T)
 
     contains
         subroutine set_init_cond(mode)
             implicit none
             integer :: mode
-
+            init_cond_mode = mode
             select case(mode)
                 case(0)
                     write(sal_unit, "(/A)") "Reading initial conditions from file:", trim(initcond_file)
@@ -34,20 +29,30 @@ module initial_conditions
                     read(cond_unit,*) max_cond
                     rewind(cond_unit)
                     write(sal_unit,*) "Total number of initial conditions =", max_cond
-                    get_init_cond => from_file_init_cond
                 case(1)
                     write(sal_unit, "(/A)") "Using NM initial conditions"
                     open(11, file="Data4NM.dat", status="old")
                     call read_Data4NM(11)
                     close(11)
-                    get_init_cond => NM_init_cond
                 case(2)
                     write(sal_unit, "(/A)") "Using NM initial conditions (sampled at temperature T)"
                     open(11, file="Data4NM.dat", status="old")
                     call read_Data4NM(11)
                     close(11)
                     call compute_Qmax(temperature, Qmax)
-                    get_init_cond => NM_init_cond_T
+            end select
+        end subroutine
+
+        subroutine get_init_cond(XP)
+            implicit none
+            real(dp), intent(out) :: XP(ndim)
+            select case(init_cond_mode)
+                case(0)
+                    call from_file_init_cond(XP)
+                case(1)
+                    call NM_init_cond(XP)
+                case(2)
+                    call NM_init_cond_T(XP)
             end select 
         end subroutine
 
