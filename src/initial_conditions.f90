@@ -78,14 +78,10 @@ module initial_conditions
             real(dp) :: phase(nfreqs), Q(nfreqs), P(nfreqs), mass
 
             amp = sqrt((2._dp * Qnum +1._dp) / freqs) ! Maximum NM amplitudes
-            write(sal_unit, *) "Qnum", Qnum
-            write(sal_unit, *) "freqs", freqs
-            write(sal_unit, *) "Amplitude", amp
 
             call RANDOM_NUMBER(phase)
             XP = 0._dp
             phase = 2._dp * pi * phase
-            write(sal_unit, *) "Initial phase:", phase
             Q = amp * sin(freqs * phase)
             P = freqs * amp * cos(freqs * phase)
 
