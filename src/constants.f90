@@ -4,8 +4,9 @@ module constants
                             sal_unit = 90, &
                             xyz_unit = 91, &
                             end_unit = 92, &
-                            cond_unit = 100, &
-                            as_unit = 101 ! file to store initial conditions from AS
+                            cond_unitA = 100, &
+                            cond_unitB = 101, &
+                            as_unit = 102 ! file to store initial conditions from AS
       real(dp),parameter,public :: autofs=2.41888e-2_dp, &
                                    autoA=0.529177_dp, &
                                    autokg=9.10939e-31_dp, &

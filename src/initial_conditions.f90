@@ -1,8 +1,8 @@
 module initial_conditions
-    use constants, only: dp, sal_unit, cond_unit
+    use constants, only: dp, sal_unit, cond_unitA, cond_unitB
     use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature
     implicit none
-    integer :: init_cond_mode, max_cond
+    integer :: init_cond_mode, max_condA, max_condB
 
     private :: init_cond_mode
 
@@ -23,10 +23,10 @@ module initial_conditions
             select case(mode)
                 case(0)
                     write(sal_unit, "(/A)") "Reading initial conditions from file:", trim(initcond_fileA)
-                    open(cond_unit, file=trim(initcond_fileA), status="old")
-                    read(cond_unit,*) max_cond
-                    rewind(cond_unit)
-                    write(sal_unit,*) "Total number of initial conditions =", max_cond
+                    open(cond_unitA, file=trim(initcond_fileA), status="old")
+                    read(cond_unitA,*) max_condA
+                    rewind(cond_unitA)
+                    write(sal_unit,*) "Total number of initial conditions =", max_condA
                 case(1)
                     write(sal_unit, "(/A)") "Using NM initial conditions"
                     open(11, file=trim(initcond_fileA), status="old")
@@ -46,17 +46,20 @@ module initial_conditions
             real(dp), intent(out) :: XP(ndim)
             select case(init_cond_mode)
                 case(0)
-                    call from_file_init_cond(XP)
+                    call from_file_init_cond(max_condA, cond_unitA, nA, XP)
                 case(1)
                     call NM_init_cond(XP)
                 case(2)
                     call NM_init_cond_T(XP)
+                !case(3)
+                !    call AplusB_init_cond(XP)
             end select 
         end subroutine
 
-        subroutine from_file_init_cond(XP)
+        subroutine from_file_init_cond(max_cond, cond_unit, n, XP)
             implicit none
-            real(dp), intent(out) :: XP(ndim)
+            integer :: max_cond, cond_unit, n
+            real(dp), intent(out) :: XP(3*2*n)
             real(dp) :: r
             integer :: icond, i 
 
