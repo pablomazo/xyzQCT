@@ -1,5 +1,5 @@
 module hamiltonian
-    use constants, only: dp, sal_unit, pi
+    use constants, only: dp, sal_unit, pi, as_unit
     use ddeabm_module, wp => ddeabm_rk
     use settings, only: ndim, nA, massA
     implicit none
@@ -28,6 +28,7 @@ module hamiltonian
             case(2)
                 write(sal_unit,"(/A/)") "Adiabatic switching"
                 potential => adiabatic_switching
+                open(as_unit, file="initial_conditions", status="replace")
         end select
     end subroutine get_potential
 

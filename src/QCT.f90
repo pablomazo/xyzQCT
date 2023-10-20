@@ -1,5 +1,6 @@
 program QCT
-    use constants, only: dp, autofs, autouma, autocm_1, autoA, sal_unit, xyz_unit, end_unit
+    use constants, only: dp, autofs, autouma, autocm_1, autoA, &
+        sal_unit, xyz_unit, end_unit, as_unit
     use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, potential_mode, &
         initcond_mode, Ts, temperature, propagator_mode
     use hamiltonian, only: derivs, get_potential, total_ener
@@ -97,6 +98,8 @@ program QCT
         write(end_unit,*) itraj, XPini, XP
         inquire(unit=xyz_unit, opened=open_unit)
         if (open_unit) close(xyz_unit)
+        inquire(unit=as_unit, opened=open_unit)
+        if (open_unit) close(as_unit)
         write(sal_unit,"(A/)") '---------------'
     end do
     close(sal_unit)
