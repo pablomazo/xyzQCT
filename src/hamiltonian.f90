@@ -1,7 +1,7 @@
 module hamiltonian
     use constants, only: dp, sal_unit, pi, as_unit
     use ddeabm_module, wp => ddeabm_rk
-    use settings, only: ndim, nA, massA
+    use settings, only: ndim, nat, mass
     implicit none
 
     abstract interface
@@ -46,9 +46,9 @@ module hamiltonian
         posxyz = XP(:ndim/2)
         P = XP(ndim/2+1:)
         call potential(t, posxyz, pot, derxyz)
-        do iat=1,nA
+        do iat=1,nat
             do ix=1,3
-                XPder(3 * (iat-1) + ix) = P(3 * (iat-1) + ix) / massA(iat)
+                XPder(3 * (iat-1) + ix) = P(3 * (iat-1) + ix) / mass(iat)
                 XPder(ndim/2 + 3 * (iat-1) + ix) = -derxyz(3 * (iat-1) + ix)
             end do
         end do
@@ -70,7 +70,7 @@ module hamiltonian
         integer :: ifreq, i, j
         real(dp), intent(in) :: t, posxyz(ndim/2)
         real(dp), intent(out) :: pot, derxyz(ndim/2)
-        real(dp) :: Q(nfreqs), P(nfreqs), aux, q_(ndim/2), mass(ndim/2)
+        real(dp) :: Q(nfreqs), P(nfreqs), aux, q_(ndim/2), mass_(ndim/2)
 
         Q = 0._dp
         q_ = 0._dp
@@ -79,8 +79,8 @@ module hamiltonian
         derxyz = 0._dp
 
         do i=1,ndim/2
-            mass(i) = sqrt(massA((i-1)/ 3 + 1))
-            q_(i) = (posxyz(i) - Xeq(i)) * mass(i)
+            mass_(i) = sqrt(mass((i-1)/ 3 + 1))
+            q_(i) = (posxyz(i) - Xeq(i)) * mass_(i)
         end do
         do i =1, ndim/2
             do ifreq=1, nfreqs
@@ -88,7 +88,7 @@ module hamiltonian
                     derxyz(i) = derxyz(i) + CXQ(j, ifreq) * q_(j) * freqs(ifreq)**2 * CXQ(i, ifreq)
                 end do
             end do
-            derxyz(i) = derxyz(i) * mass(i)
+            derxyz(i) = derxyz(i) * mass_(i)
         end do
         do ifreq=1, nfreqs
             aux = 0._dp
@@ -123,7 +123,6 @@ module hamiltonian
 
     subroutine kinetic_ener(P, E)
         use constants, only: dp, sal_unit
-        use settings, only: ndim, nA
         implicit none
         integer :: iat, ix
         real(dp), intent(in) :: P(ndim/2)
@@ -131,9 +130,9 @@ module hamiltonian
 
         E = 0._dp
 
-        do iat=1,nA
+        do iat=1,nat
             do ix=1,3
-                E = E + P(3*(iat-1)+ix)**2 / massA(iat)
+                E = E + P(3*(iat-1)+ix)**2 / mass(iat)
             end do
         end do
         E = E / 2._dp
