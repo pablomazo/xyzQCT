@@ -2,15 +2,12 @@ module initial_conditions
     use constants, only: dp, sal_unit, cond_unit
     use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature
     implicit none
-    character(len=80) :: initcond_file
     integer :: init_cond_mode, max_cond
 
     private :: init_cond_mode
 
-
     namelist /Qvib/ &
         Qnum
-
 
     ! init_cond_mode:
     ! 0 => Read from file
@@ -19,24 +16,25 @@ module initial_conditions
 
     contains
         subroutine set_init_cond(mode)
+            use settings, only: initcond_fileA, initcond_fileB
             implicit none
             integer :: mode
             init_cond_mode = mode
             select case(mode)
                 case(0)
-                    write(sal_unit, "(/A)") "Reading initial conditions from file:", trim(initcond_file)
-                    open(cond_unit, file=trim(initcond_file), status="old")
+                    write(sal_unit, "(/A)") "Reading initial conditions from file:", trim(initcond_fileA)
+                    open(cond_unit, file=trim(initcond_fileA), status="old")
                     read(cond_unit,*) max_cond
                     rewind(cond_unit)
                     write(sal_unit,*) "Total number of initial conditions =", max_cond
                 case(1)
                     write(sal_unit, "(/A)") "Using NM initial conditions"
-                    open(11, file="Data4NM.dat", status="old")
+                    open(11, file=trim(initcond_fileA), status="old")
                     call read_Data4NM(11)
                     close(11)
                 case(2)
                     write(sal_unit, "(/A)") "Using NM initial conditions (sampled at temperature T)"
-                    open(11, file="Data4NM.dat", status="old")
+                    open(11, file=initcond_fileA, status="old")
                     call read_Data4NM(11)
                     close(11)
                     call compute_Qmax(temperature, Qmax)

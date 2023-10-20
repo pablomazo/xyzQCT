@@ -8,13 +8,16 @@ module settings
           massB(:), mass(:)
       real(dp) :: Ts, temperature
       character(len=2), allocatable :: atnameA(:), atnameB(:), atname(:)
+      character(len=80) :: initcond_fileA, initcond_fileB
 
       namelist /systemA/ &
             massA, &
-            atnameA
+            atnameA, &
+            initcond_fileA
       namelist /systemB/ &
             massB, &
-            atnameB
+            atnameB, &
+            initcond_fileB
       contains
       subroutine initial_settings()
           implicit none
@@ -23,7 +26,12 @@ module settings
           ndim = 2 * 3 * (nA + nB)
           allocate(XP(ndim), XPini(ndim), massA(nA), atnameA(nA), Xeq(ndim/2), &
               massB(nB), atnameB(nB), mass(nat), atname(nat))
+
+          ! Defaults
+          initcond_fileA = ""
+          initcond_fileB = ""
           massA = 0._dp
+          massB = 0._dp
 
           call setpotxyz
           read(10, nml=systemA, iostat=ios)

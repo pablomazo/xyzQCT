@@ -4,7 +4,7 @@ program QCT
     use settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
         initcond_mode, Ts, temperature, propagator_mode, nB, nat
     use hamiltonian, only: derivs, get_potential, total_ener
-    use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
+    use initial_conditions, only: set_init_cond, get_init_cond
     use physics, only: get_COM, get_LMOM_AMOM
     use propagator, only: set_propagator, propagate, reset_propagator
     use ddeabm_module, wp => ddeabm_rk
@@ -27,7 +27,6 @@ program QCT
         print_time, &
         tottime,&
         rfin, &
-        initcond_file, &
         potential_mode, &
         initcond_mode, &
         propagator_mode, &
@@ -42,7 +41,6 @@ program QCT
     initcond_mode = 0
     propagator_mode = 0
     Ts = 0._dp
-    initcond_file = ""
     init_cond_print = 0._dp
     rfin=200._dp
 
