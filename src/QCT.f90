@@ -1,8 +1,8 @@
 program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, &
         sal_unit, xyz_unit, end_unit, as_unit
-    use settings, only: initial_settings, ndim, nA, massA, atnameA, XP, XPini, potential_mode, &
-        initcond_mode, Ts, temperature, propagator_mode
+    use settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
+        initcond_mode, Ts, temperature, propagator_mode, nB, nat
     use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond, initcond_file
     use physics, only: get_COM, get_LMOM_AMOM
@@ -22,6 +22,7 @@ program QCT
     namelist /input/ &
         ntrajs, &
         nA, &
+        nB, &
         print_time, &
         tottime,&
         rfin, &
@@ -34,6 +35,7 @@ program QCT
         init_cond_print
 
     ! Defaults
+    nB = 0
     potential_mode = 0
     initcond_mode = 0
     propagator_mode = 0
@@ -74,8 +76,8 @@ program QCT
         XP = XPini
 
         call total_ener(timein, XP, kener, potener)
-        call get_COM(ndim, XP, 1, nA, massA, QCOM, PCOM)
-        call get_LMOM_AMOM(ndim, XP, 1, nA, massA, QCOM, PCOM, LMOM, AMOM)
+        call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
+        call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
         Eini = (kener + potener) * autocm_1
         write(sal_unit,*) "Ener(initial) / cm-1:", Eini
         write(sal_unit,*) "              COM / au:", QCOM
@@ -84,8 +86,8 @@ program QCT
         call flush(sal_unit)
         call propagate(XP, final_t, elapsed)
         call total_ener(timeout, XP, kener, potener)
-        call get_COM(ndim, XP, 1, nA, massA, QCOM, PCOM)
-        call get_LMOM_AMOM(ndim, XP, 1, nA, massA, QCOM, PCOM, LMOM, AMOM)
+        call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
+        call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
         Eend = (kener + potener) * autocm_1
         write(sal_unit,*) "Ener(final) / cm-1  :", Eend
         write(sal_unit,*) "              COM / au:", QCOM
