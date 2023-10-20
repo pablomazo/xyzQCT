@@ -12,7 +12,7 @@ program QCT
     implicit none
 
     character(len=80) :: traj_file
-    integer :: ntrajs, itraj
+    integer :: ntrajs, itraj, nini
     real(dp) :: tottime, timein, timeout, kener, &
                 potener, print_time, tprev, rfin, Eini, Eend, &
                 init_cond_print, final_t, &
@@ -20,6 +20,7 @@ program QCT
     logical :: open_unit
 
     namelist /input/ &
+        nini, &
         ntrajs, &
         nA, &
         nB, &
@@ -35,6 +36,7 @@ program QCT
         init_cond_print
 
     ! Defaults
+    nini = 1
     nB = 0
     potential_mode = 0
     initcond_mode = 0
@@ -61,17 +63,16 @@ program QCT
     close(10)
 
 
-    do itraj=1, ntrajs
+    do itraj=nini, ntrajs
         flush(sal_unit)
         write(sal_unit,"(/A)") '---------------'
+        write(sal_unit,*) "Starting traj =", itraj
         tprev = 0._dp
         if (print_time > 0._dp) then
             write(traj_file,'("traj_",i6.6,".xyz")')itraj
             open(xyz_unit, file=trim(traj_file), status="replace")
         end if
         call reset_propagator()
-
-        write(sal_unit,*) "Starting traj =", itraj
         call get_init_cond(XPini)
         XP = XPini
 
