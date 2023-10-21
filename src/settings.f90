@@ -6,7 +6,7 @@ module settings
       integer, allocatable :: Qnum(:), Qmax(:)
       real(dp), allocatable :: XP(:), XPini(:), massA(:), Xeq(:), CXQ(:,:), freqs(:), amp(:), &
           massB(:), mass(:)
-      real(dp) :: Ts, temperature
+      real(dp) :: Ts, temperature, rfin
       character(len=2), allocatable :: atnameA(:), atnameB(:), atname(:)
       character(len=80) :: initcond_fileA, initcond_fileB
 

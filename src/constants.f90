@@ -12,6 +12,7 @@ module constants
                                    autokg=9.10939e-31_dp, &
                                    autouma=5.4858e-4_dp, &
                                    autocm_1=219474.625_dp, &
+                                   autoeV=27.211324570273_dp, &
                                    pi=acos(-1._dp), &
                                    h=6.62607015e-34_dp, & ! J s
                                    c=2.99792458e8_dp, & ! m s-1

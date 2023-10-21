@@ -1,13 +1,20 @@
 module initial_conditions
-    use constants, only: dp, sal_unit, cond_unitA, cond_unitB
-    use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature
+    use constants, only: dp, sal_unit, cond_unitA, cond_unitB, autoeV, pi
+    use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
+    real(dp) :: Ecoll, Trot, rini, bmax, bmin
 
     private :: init_cond_mode
 
     namelist /Qvib/ &
         Qnum
+    namelist /collision/ &
+        Ecoll, &
+        Trot, &
+        rini, &
+        bmax, &
+        bmin
 
     ! init_cond_mode:
     ! 0 => Read from file
@@ -38,6 +45,35 @@ module initial_conditions
                     call read_Data4NM(11)
                     close(11)
                     call compute_Qmax(temperature, Qmax)
+                case(3)
+                    write(sal_unit, "(/A)") "Using initial conditions for A+B collision"
+                    Ecoll = 0._dp
+                    Trot = 0._dp
+                    bmin = 0._dp
+                    read(10, nml=collision)
+                    write(sal_unit, nml=collision)
+                    Ecoll = Ecoll/autoeV
+                    if (rini > rfin) then
+                        write(sal_unit,*) "ERROR: rini must be smaller than rfin"
+                        stop
+                    end if
+
+                    if (bmax > rini) then
+                        write(sal_unit,*) "ERROR: bmax must be smaller or equal than rfin"
+                        stop
+                    end if
+
+                    open(cond_unitA, file=trim(initcond_fileA), status="old")
+                    read(cond_unitA,*) max_condA
+                    rewind(cond_unitA)
+                    write(sal_unit,*) "Total number of initial conditions (A) =", max_condA
+                    open(cond_unitB, file=trim(initcond_fileB), status="old")
+                    read(cond_unitB,*) max_condB
+                    rewind(cond_unitB)
+                    write(sal_unit,*) "Total number of initial conditions (B) =", max_condB
+                case default
+                    write(sal_unit,"(/A/)") "Unknown initial condition mode."
+                    stop
             end select
         end subroutine
 
@@ -51,8 +87,8 @@ module initial_conditions
                     call NM_init_cond(XP)
                 case(2)
                     call NM_init_cond_T(XP)
-                !case(3)
-                !    call AplusB_init_cond(XP)
+                case(3)
+                    call AplusB_init_cond(XP)
             end select 
         end subroutine
 
@@ -170,5 +206,123 @@ module initial_conditions
               Qmax(ifreq) = iv
           end do
           write(sal_unit, *) "Qmax =", Qmax
+      end subroutine
+
+      subroutine AplusB_init_cond(XP)
+          use physics, only: get_COM, get_inertia_moments, matrix_rotation, get_angular_velocity, &
+              add_angular_velocity, get_LMOM_AMOM, rotate_euler
+          use settings, only: nA, nB, massA, massB, nat, mass
+          implicit none
+          real(dp), intent(out) :: XP(ndim)
+          real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, bparam, r, ang, &
+              inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi
+          integer :: iat
+
+          XP = 0.0_dp
+          call from_file_init_cond(max_condA, cond_unitA, nA, XPA)
+          call from_file_init_cond(max_condB, cond_unitB, nB, XPB)
+
+          !-------------------------------
+          ! Remove COM and momentum (A and B)
+          call get_COM(3*2*nA, XPA, 1, nA, massA, QCOM, PCOM)
+          mtot = sum(massA)
+          do iat=1,nA
+              XPA(3*(iat-1)+1:3*iat) = XPA(3*(iat-1)+1:3*iat) - QCOM
+              XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) = &
+                  XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) - PCOM * massA(iat) / mtot
+          end do
+          call get_COM(3*2*nA, XPA, 1, nA, massA, QCOM, PCOM)
+
+          call get_COM(3*2*nB, XPB, 1, nB, massB, QCOM, PCOM)
+          mtot = sum(massB)
+          do iat=1,nB
+              XPB(3*(iat-1)+1:3*iat) = XPB(3*(iat-1)+1:3*iat) - QCOM
+              XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) = &
+                  XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) - PCOM * massB(iat) / mtot
+          end do
+          call get_COM(3*2*nB, XPB, 1, nB, massB, QCOM, PCOM)
+          !-------------------------------
+
+          !-------------------------------
+          ! Align with inertia axis and remove angular momentum + euler rotation
+          ! A
+          call get_inertia_moments(nA, XPA(:3*nA), massA, inertia, inertia_vec)
+          call matrix_rotation(3, nA, XPA(:3*nA), inertia_vec)
+          call matrix_rotation(3, nA, XPA(3*nA+1:), inertia_vec)
+          call get_inertia_moments(nA, XPA(:3*nA), massA, inertia, inertia_vec)
+          call get_LMOM_AMOM(3*2*nA, XPA,1, nA, massA, QCOM, PCOM, LMOM, AMOM)
+          call get_angular_velocity(inertia, AMOM, omega)
+          call add_angular_velocity(nA, XPA, massA, omega, -1._dp)
+
+          call RANDOM_NUMBER(r)
+          phi = 2 * pi * r
+          call RANDOM_NUMBER(r)
+          theta = pi * r
+          call RANDOM_NUMBER(r)
+          chi = 2 * pi * r
+          call rotate_euler(nA, XPA, phi, theta, chi)
+          write(sal_unit,*) "Setting euler phi, theta, chi (A) = ", phi, theta, chi
+
+          ! B
+          call get_inertia_moments(nB, XPB(:3*nB), massB, inertia, inertia_vec)
+          call matrix_rotation(3, nB, XPB(:3*nB), inertia_vec)
+          call matrix_rotation(3, nB, XPB(3*nB+1:), inertia_vec)
+          call get_inertia_moments(nB, XPB(:3*nB), massB, inertia, inertia_vec)
+          call get_LMOM_AMOM(3*2*nB, XPB,1, nB, massB, QCOM, PCOM, LMOM, AMOM)
+          call get_angular_velocity(inertia, AMOM, omega)
+          call add_angular_velocity(nB, XPB, massB, omega, -1._dp)
+
+          call RANDOM_NUMBER(r)
+          phi = 2 * pi * r
+          call RANDOM_NUMBER(r)
+          theta = pi * r
+          call RANDOM_NUMBER(r)
+          chi = 2 * pi * r
+          call rotate_euler(nB, XPB, phi, theta, chi)
+          write(sal_unit,*) "Setting euler phi, theta, chi (B) = ", phi, theta, chi
+          !-------------------------------
+
+          !-------------------------------
+          ! Move system B to rini with bparam
+          call RANDOM_NUMBER(r)
+          bparam = bmin + (bmax - bmin) * r
+          write(sal_unit,*) "Setting bmax / au = ", bparam
+          call RANDOM_NUMBER(r)
+          ang = 2 * pi * r
+          QCOM = 0.0_dp
+          QCOM(1) = bparam * cos(ang)
+          QCOM(2) = bparam * sin(ang)
+          QCOM(3) = sqrt(abs(rini**2-bparam**2))
+          do iat=1,nB
+              XPB(3*(iat-1)+1:3*iat) = XPB(3*(iat-1)+1:3*iat) + QCOM
+          end do
+          !-------------------------------
+
+          !-------------------------------
+          ! Add pZ to system b
+          write(sal_unit,*) "Setting Ecoll / au = ", Ecoll
+          mtot = sum(massB)
+          PCOM = 0.0_dp
+          PCOM(3)=-sqrt(2._dp * mtot * Ecoll)
+          do iat=1,nB
+              XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) = &
+                  XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) + PCOM * massB(iat) / mtot
+          end do
+          !-------------------------------
+
+          XP(1:3*nA) = XPA(1:3*nA)
+          XP(3*nA+1:3*nA+3*nB) = XPB(1:3*nB)
+          XP(3*nA+3*nB+1:3*2*nA+3*nB) = XPA(3*nA+1:)
+          XP(3*2*nA+3*nB+1:) = XPB(3*nB+1:)
+
+          ! Set COM and momentum at [0,0,0]
+          call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
+          mtot = sum(mass)
+          do iat=1,nat
+              XP(3*(iat-1)+1:3*iat) = XP(3*(iat-1)+1:3*iat) - QCOM
+              XP(3*nat+3*(iat-1)+1:3*nat+3*iat) = &
+                  XP(3*nat+3*(iat-1)+1:3*nat+3*iat) - PCOM * mass(iat) / mtot
+          end do
+          flush(sal_unit)
       end subroutine
 end module initial_conditions

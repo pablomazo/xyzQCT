@@ -2,7 +2,7 @@ program QCT
     use constants, only: dp, autofs, autouma, autocm_1, autoA, &
         sal_unit, xyz_unit, end_unit, as_unit
     use settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
-        initcond_mode, Ts, temperature, propagator_mode, nB, nat
+        initcond_mode, Ts, temperature, propagator_mode, nB, nat, rfin
     use hamiltonian, only: derivs, get_potential, total_ener
     use initial_conditions, only: set_init_cond, get_init_cond
     use physics, only: get_COM, get_LMOM_AMOM
@@ -14,7 +14,7 @@ program QCT
     character(len=80) :: traj_file
     integer :: ntrajs, itraj, nini
     real(dp) :: tottime, timein, timeout, kener, &
-                potener, print_time, tprev, rfin, Eini, Eend, &
+                potener, print_time, tprev, Eini, Eend, &
                 init_cond_print, final_t, &
                 QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed
     logical :: open_unit
@@ -54,6 +54,7 @@ program QCT
     Ts = Ts/autofs
     tottime=tottime/autofs
     print_time=print_time/autofs
+
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
     call get_potential(potential_mode)

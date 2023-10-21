@@ -17,7 +17,7 @@ module utils
 
         call write_header()
         write(sal_unit, *) 
-        write(sal_unit, *) "Hostname:", trim(hostname)
+        write(sal_unit, *) "Hostname: ", trim(hostname)
         write(sal_unit, "(X,A5,2X,2(I0.2,A1),I4,A1,3(I0.2,A1)/)") &
             "Date:", values(3),"/",values(2),"/",values(1),"-",values(5),":",values(6),":",values(7)
         write(sal_unit, *) 

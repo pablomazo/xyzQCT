@@ -60,4 +60,96 @@ module physics
         p(3) = v(1) * w(2) - w(1) * v(2)
 
     end subroutine cross_prod
+
+    subroutine get_inertia_moments(nat, pos, mass, inertia, inertia_mat)
+        use lapack_int, only: eigh
+        implicit none
+        integer, intent(in) :: nat
+        real(dp), intent(in) :: pos(3*nat), mass(nat)
+        real(dp), intent(out) :: inertia(3), inertia_mat(3,3) ! inertia_mat holds the eigenvector of the inertia matrix on out
+        integer :: iat
+
+        inertia_mat = 0._dp
+        do iat=1,nat
+            inertia_mat(1,1) = inertia_mat(1,1) + mass(iat) * (pos(3*(iat-1)+2)**2 + pos(3*(iat-1)+3)**2)
+            inertia_mat(2,2) = inertia_mat(2,2) + mass(iat) * (pos(3*(iat-1)+1)**2 + pos(3*(iat-1)+3)**2)
+            inertia_mat(3,3) = inertia_mat(3,3) + mass(iat) * (pos(3*(iat-1)+1)**2 + pos(3*(iat-1)+2)**2)
+            inertia_mat(1,2) = inertia_mat(1,2) - mass(iat) * pos(3*(iat-1)+1) * pos(3*(iat-1)+2)
+            inertia_mat(1,3) = inertia_mat(1,3) - mass(iat) * pos(3*(iat-1)+1) * pos(3*(iat-1)+3)
+            inertia_mat(2,3) = inertia_mat(2,3) - mass(iat) * pos(3*(iat-1)+2) * pos(3*(iat-1)+3)
+        end do
+        inertia_mat(2,1) = inertia_mat(1,2)
+        inertia_mat(3,1) = inertia_mat(1,3)
+        inertia_mat(3,2) = inertia_mat(2,3)
+        call eigh(3, inertia_mat, inertia)
+    end subroutine
+
+    subroutine matrix_rotation(n,m, A, R)
+        implicit none
+        integer, intent(in) :: n, m
+        real(dp), intent(inout) :: A(n*m)
+        real(dp), intent(in) :: R(n,n)
+        real(dp) :: aux(m,n), tmp(m,n)
+        integer :: i, j
+
+        do i=1,m ! nat
+            do j=1,n ! ncoor
+                aux(i,j) = A(3 * (i-1)+j)
+            end do
+        end do
+        tmp = matmul(aux, R)
+        do i=1,m
+            do j=1,n
+                A(3*(i-1)+j) = tmp(i,j)
+            end do
+        end do
+    end subroutine
+
+    subroutine get_angular_velocity(inertia, AMOM, omega)
+        implicit none
+        real(dp), intent(in) :: inertia(3), AMOM(3)
+        real(dp), intent(out) :: omega(3)
+        real(dp) :: inertia_inv(3)
+
+        inertia_inv = 0._dp
+        where (inertia > 1e-10_dp)
+            inertia_inv = 1._dp / inertia
+        end where
+        omega = AMOM * inertia_inv
+    end subroutine
+
+    subroutine add_angular_velocity(n, XP, mass, omega, sg)
+        implicit none
+        integer, intent(in) :: n
+        real(dp), intent(inout) :: XP(3*2*n)
+        real(dp), intent(in) :: mass(n), omega(3), sg
+        real(dp) :: x(3), rotvel(3)
+        integer :: iat
+
+        do iat=1,n
+            x = XP(3*(iat-1)+1:3*iat)
+            call cross_prod(omega, x, rotvel)
+            XP(3*n+3*(iat-1)+1:3*n+3*iat) = XP(3*n+3*(iat-1)+1:3*n+3*iat) + rotvel * mass(iat) * sg
+        end do
+    end subroutine
+
+    subroutine rotate_euler(nat, XP, phi, theta, chi)
+        implicit none
+        integer, intent(in) :: nat
+        real(dp), intent(inout) :: XP(3*2*nat)
+        real(dp), intent(in) :: phi, theta, chi
+        real(dp) :: EulerR(3,3)
+
+        EulerR(1,1)=cos(phi)*cos(theta)*cos(chi)-sin(phi)*sin(chi)
+        EulerR(1,2)=sin(phi)*cos(theta)*cos(chi)+cos(phi)*sin(chi)
+        EulerR(1,3)=-sin(theta)*cos(chi)
+        EulerR(2,1)=-cos(phi)*cos(theta)*sin(chi)-sin(phi)*cos(chi)
+        EulerR(2,2)=-sin(phi)*cos(theta)*sin(chi)+cos(phi)*cos(chi)
+        EulerR(2,3)=sin(theta)*sin(chi)
+        EulerR(3,1)=cos(phi)*sin(theta)
+        EulerR(3,2)=sin(phi)*sin(theta)
+        EulerR(3,3)=cos(theta)
+        call matrix_rotation(3, nat, XP(:3*nat), EulerR)
+        call matrix_rotation(3, nat, XP(3*nat+1:), EulerR)
+    end subroutine
 end module physics
