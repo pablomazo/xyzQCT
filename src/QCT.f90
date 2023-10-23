@@ -12,12 +12,13 @@ program QCT
     implicit none
 
     character(len=80) :: traj_file
-    integer :: ntrajs, itraj, nini
+    integer :: ntrajs, itraj, nini, seed_size
     real(dp) :: tottime, timein, timeout, kener, &
                 potener, print_time, tprev, Eini, Eend, &
                 init_cond_print, final_t, &
                 QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed
     logical :: open_unit
+    integer, allocatable :: seed(:)
 
     namelist /input/ &
         nini, &
@@ -62,8 +63,12 @@ program QCT
     call set_propagator(propagator_mode, tottime, print_time, rfin)
     close(10)
 
-
+    call RANDOM_SEED(size=seed_size)
+    allocate(seed(seed_size))
     do itraj=nini, ntrajs
+        seed = itraj
+        call RANDOM_SEED(PUT=seed) ! To guarantee that trajectories are reproducible.
+                                   ! There are probably better ways...
         flush(sal_unit)
         write(sal_unit,"(/A)") '---------------'
         write(sal_unit,*) "Starting traj =", itraj
