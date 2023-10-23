@@ -42,6 +42,7 @@ program QCT
     propagator_mode = 0
     Ts = 0._dp
     init_cond_print = 0._dp
+    print_time = 0._dp
     rfin=200._dp
 
     open(sal_unit, file="sal", status="replace")
