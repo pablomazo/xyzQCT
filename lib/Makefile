@@ -10,7 +10,7 @@ ddeabm: $(DDEABMo)
 	ar cvr libddeabm.a $^
 
 clean:
-	rm -f *a *mod *.o ./roots-fortran/src/*.o ./ddeabm/src/*.o
+	rm -f *a *mod *.o ./roots-fortran/src/*.o ./ddeabm/src/*.o ./roots-fortran/src/*.mod ./ddeabm/src/*.mod
 
 %.o: %.F90
 	$(FC) $(FFLAGS) -o $@ -c $<
