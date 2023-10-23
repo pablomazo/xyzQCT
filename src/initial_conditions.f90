@@ -1,11 +1,11 @@
 module initial_conditions
-    use constants, only: dp, sal_unit, cond_unitA, cond_unitB, autoeV, pi
+    use constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi
     use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
-    real(dp) :: Ecoll, Trot, rini, bmax, bmin
+    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam
 
-    private :: init_cond_mode
+    private :: init_cond_mode, bparam
 
     namelist /Qvib/ &
         Qnum
@@ -74,6 +74,25 @@ module initial_conditions
                 case default
                     write(sal_unit,"(/A/)") "Unknown initial condition mode."
                     stop
+            end select
+            ! write info to end_cond file
+            select case(init_cond_mode)
+                case (:2)
+                    write(end_unit,*) "itraj, XP0, XP, time"
+                case (3)
+                    write(end_unit,*) "itraj, XP0, XP, time, bmax"
+            end select
+        end subroutine
+
+        subroutine write_end_cond(itraj, time, XP0, XP)
+            implicit none
+            integer :: itraj
+            real(dp), intent(in) :: time, XP0(ndim), XP(ndim)
+            select case(init_cond_mode)
+                case (:2)
+                    write(end_unit,*) itraj, XP0, XP, time
+                case (3)
+                    write(end_unit,*) itraj, XP0, XP, time, bparam
             end select
         end subroutine
 
@@ -214,7 +233,7 @@ module initial_conditions
           use settings, only: nA, nB, massA, massB, nat, mass
           implicit none
           real(dp), intent(out) :: XP(ndim)
-          real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, bparam, r, ang, &
+          real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, r, ang, &
               inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi
           integer :: iat
 

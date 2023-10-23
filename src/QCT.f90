@@ -4,7 +4,7 @@ program QCT
     use settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
         initcond_mode, Ts, temperature, propagator_mode, nB, nat, rfin
     use hamiltonian, only: derivs, get_potential, total_ener
-    use initial_conditions, only: set_init_cond, get_init_cond
+    use initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
     use physics, only: get_COM, get_LMOM_AMOM
     use propagator, only: set_propagator, propagate, reset_propagator
     use ddeabm_module, wp => ddeabm_rk
@@ -97,7 +97,7 @@ program QCT
         write(sal_unit,*) "Final time / fs:", final_t * autofs
         write(sal_unit,*) "End of traj =", itraj
         write(sal_unit,*) "Time elapsed / s:", elapsed
-        write(end_unit,*) itraj, XPini, XP
+        call write_end_cond(itraj, final_t * autofs, XPini, XP)
         inquire(unit=xyz_unit, opened=open_unit)
         if (open_unit) close(xyz_unit)
         inquire(unit=as_unit, opened=open_unit)
