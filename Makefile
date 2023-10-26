@@ -2,7 +2,7 @@ FC=gfortran
 FFLAGS=-O3
 
 ROOT=./# Path to source files of xyzQCT
-QCT=$(addprefix $(ROOT)/src/, lapack_int.f90 constants.f90 settings.f90 hamiltonian.f90 physics.f90 initial_conditions.f90 propagator.f90 utils.f90)
+QCT=$(addprefix $(ROOT)/src/, constants.f90 lapack_int.f90 settings.f90 hamiltonian.f90 physics.f90 initial_conditions.f90 propagator.f90 utils.f90)
 QCTo=$(QCT:%.f90=%.o)
 
 DDEABM=$(ROOT)/lib/roots-fortran/src/root_module.F90 $(ROOT)/lib/ddeabm/src/ddeabm_module.F90
