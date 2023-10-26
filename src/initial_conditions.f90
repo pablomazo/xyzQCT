@@ -234,30 +234,31 @@ module initial_conditions
           implicit none
           real(dp), intent(out) :: XP(ndim)
           real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, r, ang, &
-              inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi
+              inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi, mred, mA, mB
           integer :: iat
 
           XP = 0.0_dp
           call from_file_init_cond(max_condA, cond_unitA, nA, XPA)
           call from_file_init_cond(max_condB, cond_unitB, nB, XPB)
 
+          mA = sum(massA)
+          mB = sum(massB)
+          mtot = mA + mB
           !-------------------------------
           ! Remove COM and momentum (A and B)
           call get_COM(3*2*nA, XPA, 1, nA, massA, QCOM, PCOM)
-          mtot = sum(massA)
           do iat=1,nA
               XPA(3*(iat-1)+1:3*iat) = XPA(3*(iat-1)+1:3*iat) - QCOM
               XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) = &
-                  XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) - PCOM * massA(iat) / mtot
+                  XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) - PCOM * massA(iat) / mA
           end do
           call get_COM(3*2*nA, XPA, 1, nA, massA, QCOM, PCOM)
 
           call get_COM(3*2*nB, XPB, 1, nB, massB, QCOM, PCOM)
-          mtot = sum(massB)
           do iat=1,nB
               XPB(3*(iat-1)+1:3*iat) = XPB(3*(iat-1)+1:3*iat) - QCOM
               XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) = &
-                  XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) - PCOM * massB(iat) / mtot
+                  XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) - PCOM * massB(iat) / mB
           end do
           call get_COM(3*2*nB, XPB, 1, nB, massB, QCOM, PCOM)
           !-------------------------------
@@ -320,12 +321,16 @@ module initial_conditions
           !-------------------------------
           ! Add pZ to system b
           write(sal_unit,*) "Setting Ecoll / au = ", Ecoll
-          mtot = sum(massB)
+          mred = mA * mB / (mA + mB)
           PCOM = 0.0_dp
-          PCOM(3)=-sqrt(2._dp * mtot * Ecoll)
+          PCOM(3)=sqrt(2._dp * mred * Ecoll)
+          do iat=1,nA
+              XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) = &
+                  XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) + PCOM * massA(iat) / mA
+          end do
           do iat=1,nB
               XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) = &
-                  XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) + PCOM * massB(iat) / mtot
+                  XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) - PCOM * massB(iat) / mB
           end do
           !-------------------------------
 
