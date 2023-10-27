@@ -1,7 +1,7 @@
 module xyzqct_constants
       implicit none
       integer, parameter :: dp = kind(1d0), &
-                            sal_unit = 90, &
+                            sal_unit = 6, &
                             xyz_unit = 91, &
                             end_unit = 92, &
                             cond_unitA = 100, &
