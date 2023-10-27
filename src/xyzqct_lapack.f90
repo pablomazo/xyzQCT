@@ -1,5 +1,5 @@
-module lapack_int
-    use constants, only: dp
+module xyzqct_lapack
+    use xyzqct_constants, only: dp
     implicit none
 
     contains

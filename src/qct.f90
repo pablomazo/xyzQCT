@@ -1,14 +1,14 @@
 program QCT
-    use constants, only: dp, autofs, autouma, autocm_1, autoA, &
+    use xyzqct_constants, only: dp, autofs, autouma, autocm_1, autoA, &
         sal_unit, xyz_unit, end_unit, as_unit
-    use settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
+    use xyzqct_settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
         initcond_mode, Ts, temperature, propagator_mode, nB, nat, rfin
-    use hamiltonian, only: derivs, get_potential, total_ener
-    use initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
-    use physics, only: get_COM, get_LMOM_AMOM
-    use propagator, only: set_propagator, propagate, reset_propagator
+    use xyzqct_hamiltonian, only: derivs, get_potential, total_ener
+    use xyzqct_initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
+    use xyzqct_physics, only: get_COM, get_LMOM_AMOM
+    use xyzqct_propagator, only: set_propagator, propagate, reset_propagator
     use ddeabm_module, wp => ddeabm_rk
-    use utils, only: code_starter
+    use xyzqct_utils, only: code_starter
     implicit none
 
     character(len=80) :: traj_file

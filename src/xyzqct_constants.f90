@@ -1,4 +1,4 @@
-module constants
+module xyzqct_constants
       implicit none
       integer, parameter :: dp = kind(1d0), &
                             sal_unit = 90, &
@@ -267,4 +267,4 @@ module constants
                     mass = -1.0_dp
               end select
           end subroutine
-end module constants
+end module xyzqct_constants

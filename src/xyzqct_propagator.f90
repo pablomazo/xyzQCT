@@ -1,7 +1,7 @@
-module propagator
-    use constants, only: dp, sal_unit, autofs
+module xyzqct_propagator
+    use xyzqct_constants, only: dp, sal_unit, autofs
     use ddeabm_module, wp => ddeabm_rk
-    use settings, only: ndim
+    use xyzqct_settings, only: ndim
     type(ddeabm_with_event_class) :: s
     real(dp) :: gval, relerr, abserr, tottime, tprev, rfin, print_time, deltat, deltat2
     integer :: max_step_factor, iprop
@@ -55,7 +55,7 @@ module propagator
         end subroutine
 
         subroutine set_DDEABM_propagator()
-            use hamiltonian, only: derivs
+            use xyzqct_hamiltonian, only: derivs
             implicit none
             integer :: ios, totalsteps
             namelist /propagator/ relerr, abserr, max_step_factor
@@ -95,7 +95,7 @@ module propagator
         end subroutine
 
         subroutine set_verlet_propagator()
-            use constants, only: autofs
+            use xyzqct_constants, only: autofs
             implicit none
             integer :: ios
             namelist/propagator/ deltat
@@ -108,8 +108,8 @@ module propagator
         end subroutine
 
         subroutine propagate_verlet(XP, final_t, elapsed)
-            use hamiltonian, only: derivs
-            use settings, only: nat, mass
+            use xyzqct_hamiltonian, only: derivs
+            use xyzqct_settings, only: nat, mass
             implicit none
             real(dp), intent(inout) :: XP(ndim)
             real(dp), intent(out) :: elapsed, final_t
@@ -144,9 +144,9 @@ module propagator
         end subroutine
 
         subroutine xyz_report(me, t, XP)
-            use constants, only: xyz_unit, autoA
-            use settings, only: potential_mode, nat, atname
-            use hamiltonian, only: total_ener
+            use xyzqct_constants, only: xyz_unit, autoA
+            use xyzqct_settings, only: potential_mode, nat, atname
+            use xyzqct_hamiltonian, only: total_ener
             implicit none
             class(ddeabm_class), intent(inout) :: me
             integer :: iat
@@ -165,7 +165,7 @@ module propagator
         end subroutine
 
         subroutine checkend(me, t, XP, is_end)
-            use settings, only: nat
+            use xyzqct_settings, only: nat
             implicit none
             class(ddeabm_with_event_class), intent(inout) :: me
             integer :: iat1, iat2, ix

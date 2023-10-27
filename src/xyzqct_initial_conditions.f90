@@ -1,6 +1,6 @@
-module initial_conditions
-    use constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi
-    use settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
+module xyzqct_initial_conditions
+    use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi
+    use xyzqct_settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
     real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam
@@ -23,7 +23,7 @@ module initial_conditions
 
     contains
         subroutine set_init_cond(mode)
-            use settings, only: initcond_fileA, initcond_fileB
+            use xyzqct_settings, only: initcond_fileA, initcond_fileB
             implicit none
             integer :: mode
             init_cond_mode = mode
@@ -132,7 +132,7 @@ module initial_conditions
         end subroutine
 
         subroutine NM_init_cond(XP)
-            use constants, only: pi
+            use xyzqct_constants, only: pi
             implicit none
             integer :: ix, ifreq
             real(dp), intent(out) :: XP(ndim)
@@ -159,8 +159,8 @@ module initial_conditions
         end subroutine
 
         subroutine NM_init_cond_T(XP)
-            use constants, only: h, c, kb, autocm_1
-            use settings, only: Qmax, temperature
+            use xyzqct_constants, only: h, c, kb, autocm_1
+            use xyzqct_settings, only: Qmax, temperature
             implicit none
             integer :: imode, ii
             real(dp), intent(out) :: XP(ndim)
@@ -181,7 +181,7 @@ module initial_conditions
         end subroutine
 
       subroutine read_Data4NM(read_unit)
-          use constants, only: autoA, autocm_1
+          use xyzqct_constants, only: autoA, autocm_1
           implicit none
           integer, intent(in) :: read_unit
           integer :: iat, ix, ios
@@ -206,7 +206,7 @@ module initial_conditions
       end subroutine read_Data4NM
 
       subroutine compute_Qmax(T, Qmax)
-          use constants, only: h, c, kb, autocm_1
+          use xyzqct_constants, only: h, c, kb, autocm_1
           implicit none
           real(dp), intent(in) :: T
           integer, intent(out) :: Qmax(nfreqs)
@@ -228,9 +228,9 @@ module initial_conditions
       end subroutine
 
       subroutine AplusB_init_cond(XP)
-          use physics, only: get_COM, get_inertia_moments, matrix_rotation, get_angular_velocity, &
+          use xyzqct_physics, only: get_COM, get_inertia_moments, matrix_rotation, get_angular_velocity, &
               add_angular_velocity, get_LMOM_AMOM, rotate_euler
-          use settings, only: nA, nB, massA, massB, nat, mass
+          use xyzqct_settings, only: nA, nB, massA, massB, nat, mass
           implicit none
           real(dp), intent(out) :: XP(ndim)
           real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, r, ang, &
@@ -349,4 +349,4 @@ module initial_conditions
           end do
           flush(sal_unit)
       end subroutine
-end module initial_conditions
+end module xyzqct_initial_conditions

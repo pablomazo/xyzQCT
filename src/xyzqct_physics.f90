@@ -1,5 +1,5 @@
-module physics
-    use constants, only: dp
+module xyzqct_physics
+    use xyzqct_constants, only: dp
     contains
 
     subroutine get_COM(ndim, XP, nat1, nat2, mass, QCOM, PCOM)
@@ -62,7 +62,7 @@ module physics
     end subroutine cross_prod
 
     subroutine get_inertia_moments(nat, pos, mass, inertia, inertia_mat)
-        use lapack_int, only: eigh
+        use xyzqct_lapack, only: eigh
         implicit none
         integer, intent(in) :: nat
         real(dp), intent(in) :: pos(3*nat), mass(nat)
@@ -152,4 +152,4 @@ module physics
         call matrix_rotation(3, nat, XP(:3*nat), EulerR)
         call matrix_rotation(3, nat, XP(3*nat+1:), EulerR)
     end subroutine
-end module physics
+end module xyzqct_physics

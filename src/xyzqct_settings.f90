@@ -1,5 +1,5 @@
-module settings
-      use constants, only: dp, autouma, sal_unit, get_mass
+module xyzqct_settings
+      use xyzqct_constants, only: dp, autouma, sal_unit, get_mass
       implicit none
       integer, public :: nA, nB, nat, ndim, nfreqs, potential_mode, initcond_mode, propagator_mode
       integer :: ios

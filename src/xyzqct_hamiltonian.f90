@@ -1,13 +1,13 @@
-module hamiltonian
-    use constants, only: dp, sal_unit, pi, as_unit
+module xyzqct_hamiltonian
+    use xyzqct_constants, only: dp, sal_unit, pi, as_unit
     use ddeabm_module, wp => ddeabm_rk
-    use settings, only: ndim, nat, mass
+    use xyzqct_settings, only: ndim, nat, mass
     implicit none
 
     abstract interface
         subroutine potential_base(t, posxyz, pot, derxyz)
-            use constants, only: dp
-            use settings, only: ndim
+            use xyzqct_constants, only: dp
+            use xyzqct_settings, only: ndim
             real(dp), intent(in) :: t, posxyz(ndim/2)
             real(dp), intent(out) :: pot, derxyz(ndim/2)
         end subroutine potential_base
@@ -65,7 +65,7 @@ module hamiltonian
     end subroutine userpot
 
     subroutine NMpotential(t, posxyz, pot, derxyz)
-        use  settings, only: nfreqs, freqs, CXQ, Xeq
+        use  xyzqct_settings, only: nfreqs, freqs, CXQ, Xeq
         implicit none
         integer :: ifreq, i, j
         real(dp), intent(in) :: t, posxyz(ndim/2)
@@ -101,7 +101,7 @@ module hamiltonian
     end subroutine NMpotential
 
     subroutine adiabatic_switching(t, posxyz, pot, derxyz)
-        use settings, only: Ts
+        use xyzqct_settings, only: Ts
         implicit none
         real(dp), intent(in) :: t, posxyz(ndim/2)
         real(dp), intent(out) :: pot, derxyz(ndim/2)
@@ -122,7 +122,7 @@ module hamiltonian
     end subroutine adiabatic_switching
 
     subroutine kinetic_ener(P, E)
-        use constants, only: dp, sal_unit
+        use xyzqct_constants, only: dp, sal_unit
         implicit none
         integer :: iat, ix
         real(dp), intent(in) :: P(ndim/2)
@@ -139,8 +139,8 @@ module hamiltonian
     end subroutine
 
     subroutine total_ener(t, XP, k, pot)
-        use constants, only: dp
-        use settings, only: ndim
+        use xyzqct_constants, only: dp
+        use xyzqct_settings, only: ndim
         implicit none
         real(dp), intent(in) :: t, XP(ndim)
         real(dp), intent(out) :: k, pot
@@ -149,4 +149,4 @@ module hamiltonian
         call kinetic_ener(XP(ndim/2+1:), k)
         call potential(t, XP(:ndim/2), pot, der)
     end subroutine
-end module hamiltonian
+end module xyzqct_hamiltonian

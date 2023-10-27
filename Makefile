@@ -2,7 +2,7 @@ FC=gfortran
 FFLAGS=-O3
 
 ROOT=./# Path to source files of xyzQCT
-QCT=$(addprefix $(ROOT)/src/, constants.f90 lapack_int.f90 settings.f90 hamiltonian.f90 physics.f90 initial_conditions.f90 propagator.f90 utils.f90)
+QCT=$(addprefix $(ROOT)/src/, xyzqct_constants.f90 xyzqct_lapack.f90 xyzqct_settings.f90 xyzqct_hamiltonian.f90 xyzqct_physics.f90 xyzqct_initial_conditions.f90 xyzqct_propagator.f90 xyzqct_utils.f90)
 QCTo=$(QCT:%.f90=%.o)
 
 DDEABM=$(ROOT)/lib/roots-fortran/src/root_module.F90 $(ROOT)/lib/ddeabm/src/ddeabm_module.F90
@@ -15,7 +15,7 @@ PESdir=./# Path to potential energy surface
 PES=$(addprefix $(PESdir), ) # Potential energy surface source files
 
 # QCT code
-QCT: $(PES) $(QCTo) $(ROOT)/src/QCT.f90
+QCT: $(PES) $(QCTo) $(ROOT)/src/qct.f90
 	$(FC) $(FFLAGS) -o QCT.x $^ -lddeabm $(FLIB) $(FMOD)
 
 # Make ddeabm

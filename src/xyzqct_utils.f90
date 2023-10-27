@@ -1,5 +1,5 @@
-module utils
-    use constants, only: sal_unit
+module xyzqct_utils
+    use xyzqct_constants, only: sal_unit
     implicit none
 
     contains
