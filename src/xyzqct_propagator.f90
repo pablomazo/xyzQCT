@@ -145,7 +145,7 @@ module xyzqct_propagator
 
         subroutine xyz_report(me, t, XP)
             use xyzqct_constants, only: xyz_unit, autoA
-            use xyzqct_settings, only: potential_mode, nat, atname
+            use xyzqct_settings, only: nat, atname
             use xyzqct_hamiltonian, only: total_ener
             implicit none
             class(ddeabm_class), intent(inout) :: me
