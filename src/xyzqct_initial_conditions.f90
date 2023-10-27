@@ -339,13 +339,11 @@ module xyzqct_initial_conditions
           XP(3*nA+3*nB+1:3*2*nA+3*nB) = XPA(3*nA+1:)
           XP(3*2*nA+3*nB+1:) = XPB(3*nB+1:)
 
-          ! Set COM and momentum at [0,0,0]
+          ! Set COM at [0,0,0]
           call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
           mtot = sum(mass)
           do iat=1,nat
               XP(3*(iat-1)+1:3*iat) = XP(3*(iat-1)+1:3*iat) - QCOM
-              XP(3*nat+3*(iat-1)+1:3*nat+3*iat) = &
-                  XP(3*nat+3*(iat-1)+1:3*nat+3*iat) - PCOM * mass(iat) / mtot
           end do
           flush(sal_unit)
       end subroutine
