@@ -51,7 +51,7 @@ module xyzqct_settings
              end if
           end do
           write(sal_unit, nml=systemA)
-          write(sal_unit, nml=systemB)
+          if (ios == 0) write(sal_unit, nml=systemB)
           massA = massA/autouma
           massB = massB/autouma
           mass(:nA) = massA
