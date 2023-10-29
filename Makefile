@@ -27,7 +27,7 @@ clean:
 	rm -f *.mod *.o *.x $(ROOT)/src/*.mod $(ROOT)/src/*.o $(PESdir)/*.o $(PESdir)/*.mod
 
 %.o: %.f90
-	$(FC) $(FFLAGS) -o $@ -c $<
+	$(FC) $(FFLAGS) -o $@ -c $< $(FMOD)
 
 %.o: %.F90
 	$(FC) $(FFLAGS) -o $@ -c $<
