@@ -1,8 +1,11 @@
 module xyzqct_hamiltonian
-    use xyzqct_constants, only: dp, sal_unit, pi, as_unit
+    use xyzqct_constants, only: dp, sal_unit, pi, as_unit, autofs
+    use xyzqct_settings, only: Ts
     use ddeabm_module, wp => ddeabm_rk
     use xyzqct_settings, only: ndim, nat, mass
     implicit none
+    namelist /adiabatic_switch/ &
+        Ts
 
     abstract interface
         subroutine potential_base(t, posxyz, pot, derxyz)
@@ -18,6 +21,7 @@ module xyzqct_hamiltonian
 
     subroutine get_potential(mode)
         integer, intent(in) :: mode
+        integer :: ios
         select case(mode)
             case(0)
                 write(sal_unit,"(/A/)") "Using user defined potential."
@@ -28,7 +32,20 @@ module xyzqct_hamiltonian
             case(2)
                 write(sal_unit,"(/A/)") "Adiabatic switching"
                 potential => adiabatic_switching
+                Ts=0._dp
+                rewind(10)
+                read(10, nml=adiabatic_switch, iostat=ios)
+                if (ios .ne. 0) then
+                    write(sal_unit,"(/A/)") "Namelist adiabatic_switch not found"
+                    write(sal_unit,"(/A/)") "You must define the switching time in it."
+                    stop
+                end if
+                Ts = Ts/autofs
+                write(sal_unit, nml=adiabatic_switch)
                 open(as_unit, file="initial_conditions", status="replace")
+            case default
+                write(sal_unit,"(/A/)") "Unknown potential mode."
+                stop
         end select
     end subroutine get_potential
 

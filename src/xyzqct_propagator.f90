@@ -144,8 +144,8 @@ module xyzqct_propagator
         end subroutine
 
         subroutine xyz_report(me, t, XP)
-            use xyzqct_constants, only: xyz_unit, autoA
-            use xyzqct_settings, only: nat, atname
+            use xyzqct_constants, only: xyz_unit, autoA, as_unit
+            use xyzqct_settings, only: nat, atname, Ts
             use xyzqct_hamiltonian, only: total_ener
             implicit none
             class(ddeabm_class), intent(inout) :: me
@@ -161,6 +161,10 @@ module xyzqct_propagator
                 do iat=1,nat
                     write(xyz_unit,*) atname(iat), XP(3*(iat-1)+1:3*iat) * autoA
                 end do
+            end if
+
+            if (Ts > 0 .and. t > Ts) then
+                write(as_unit,*) XP
             end if
         end subroutine
 

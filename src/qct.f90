@@ -2,7 +2,7 @@ program QCT
     use xyzqct_constants, only: dp, autofs, autouma, autocm_1, autoA, &
         sal_unit, xyz_unit, end_unit, as_unit
     use xyzqct_settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
-        initcond_mode, Ts, temperature, propagator_mode, nB, nat, rfin
+        initcond_mode, temperature, propagator_mode, nB, nat, rfin
     use xyzqct_hamiltonian, only: derivs, get_potential, total_ener
     use xyzqct_initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
     use xyzqct_physics, only: get_COM, get_LMOM_AMOM
@@ -31,7 +31,6 @@ program QCT
         potential_mode, &
         initcond_mode, &
         propagator_mode, &
-        Ts, &
         temperature, &
         init_cond_print
 
@@ -41,7 +40,6 @@ program QCT
     potential_mode = 0
     initcond_mode = 0
     propagator_mode = 0
-    Ts = 0._dp
     init_cond_print = 0._dp
     print_time = 0._dp
     rfin=200._dp
@@ -53,7 +51,6 @@ program QCT
     call code_starter()
     write(sal_unit, nml=input)
     ! Convert times
-    Ts = Ts/autofs
     tottime=tottime/autofs
     print_time=print_time/autofs
 
