@@ -50,6 +50,7 @@ module xyzqct_initial_conditions
                     Ecoll = 0._dp
                     Trot = 0._dp
                     bmin = 0._dp
+                    rewind(10)
                     read(10, nml=collision)
                     write(sal_unit, nml=collision)
                     Ecoll = Ecoll/autoeV

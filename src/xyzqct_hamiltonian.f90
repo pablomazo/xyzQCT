@@ -40,8 +40,8 @@ module xyzqct_hamiltonian
                     write(sal_unit,"(/A/)") "You must define the switching time in it."
                     stop
                 end if
-                Ts = Ts/autofs
                 write(sal_unit, nml=adiabatic_switch)
+                Ts = Ts/autofs
                 open(as_unit, file="initial_conditions", status="replace")
             case default
                 write(sal_unit,"(/A/)") "Unknown potential mode."
