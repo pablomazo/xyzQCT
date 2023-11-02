@@ -144,8 +144,8 @@ module xyzqct_initial_conditions
             call RANDOM_NUMBER(phase)
             XP = 0._dp
             phase = 2._dp * pi * phase
-            Q = amp * sin(freqs * phase)
-            P = freqs * amp * cos(freqs * phase)
+            Q = amp * sin(phase)
+            P = freqs * amp * cos(phase)
 
             do ix=1, ndim/2
                 mass = sqrt(massA((ix-1)/ 3 + 1))
