@@ -13,7 +13,7 @@ program QCT
 
     character(len=80) :: traj_file
     integer :: ntrajs, itraj, nini, seed_size
-    real(dp) :: tottime, timein, timeout, kener, &
+    real(dp) :: tottime, kener, &
                 potener, print_time, tprev, Eini, Eend, &
                 init_cond_print, final_t, &
                 QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed
@@ -78,7 +78,7 @@ program QCT
         call get_init_cond(XPini)
         XP = XPini
 
-        call total_ener(timein, XP, kener, potener)
+        call total_ener(0._dp, XP, kener, potener)
         call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
         call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
         Eini = (kener + potener) * autocm_1
@@ -88,7 +88,7 @@ program QCT
         write(sal_unit,*) " Angular momentum / au:", AMOM
         call flush(sal_unit)
         call propagate(XP, final_t, elapsed)
-        call total_ener(timeout, XP, kener, potener)
+        call total_ener(final_t, XP, kener, potener)
         call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
         call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
         Eend = (kener + potener) * autocm_1
