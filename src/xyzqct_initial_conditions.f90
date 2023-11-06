@@ -267,40 +267,44 @@ module xyzqct_initial_conditions
           !-------------------------------
           ! Align with inertia axis and remove angular momentum + euler rotation
           ! A
-          call get_inertia_moments(nA, XPA(:3*nA), massA, inertia, inertia_vec)
-          call matrix_rotation(3, nA, XPA(:3*nA), inertia_vec)
-          call matrix_rotation(3, nA, XPA(3*nA+1:), inertia_vec)
-          call get_inertia_moments(nA, XPA(:3*nA), massA, inertia, inertia_vec)
-          call get_LMOM_AMOM(3*2*nA, XPA,1, nA, massA, QCOM, PCOM, LMOM, AMOM)
-          call get_angular_velocity(inertia, AMOM, omega)
-          call add_angular_velocity(nA, XPA, massA, omega, -1._dp)
+          if (nA > 1) then
+              call get_inertia_moments(nA, XPA(:3*nA), massA, inertia, inertia_vec)
+              call matrix_rotation(3, nA, XPA(:3*nA), inertia_vec)
+              call matrix_rotation(3, nA, XPA(3*nA+1:), inertia_vec)
+              call get_inertia_moments(nA, XPA(:3*nA), massA, inertia, inertia_vec)
+              call get_LMOM_AMOM(3*2*nA, XPA,1, nA, massA, QCOM, PCOM, LMOM, AMOM)
+              call get_angular_velocity(inertia, AMOM, omega)
+              call add_angular_velocity(nA, XPA, massA, omega, -1._dp)
 
-          call RANDOM_NUMBER(r)
-          phi = 2 * pi * r
-          call RANDOM_NUMBER(r)
-          theta = pi * r
-          call RANDOM_NUMBER(r)
-          chi = 2 * pi * r
-          call rotate_euler(nA, XPA, phi, theta, chi)
-          write(sal_unit,*) "Setting euler phi, theta, chi (A) = ", phi, theta, chi
+              call RANDOM_NUMBER(r)
+              phi = 2 * pi * r
+              call RANDOM_NUMBER(r)
+              theta = pi * r
+              call RANDOM_NUMBER(r)
+              chi = 2 * pi * r
+              call rotate_euler(nA, XPA, phi, theta, chi)
+              write(sal_unit,*) "Setting euler phi, theta, chi (A) = ", phi, theta, chi
+          end if
 
           ! B
-          call get_inertia_moments(nB, XPB(:3*nB), massB, inertia, inertia_vec)
-          call matrix_rotation(3, nB, XPB(:3*nB), inertia_vec)
-          call matrix_rotation(3, nB, XPB(3*nB+1:), inertia_vec)
-          call get_inertia_moments(nB, XPB(:3*nB), massB, inertia, inertia_vec)
-          call get_LMOM_AMOM(3*2*nB, XPB,1, nB, massB, QCOM, PCOM, LMOM, AMOM)
-          call get_angular_velocity(inertia, AMOM, omega)
-          call add_angular_velocity(nB, XPB, massB, omega, -1._dp)
+          if (nB > 1) then
+              call get_inertia_moments(nB, XPB(:3*nB), massB, inertia, inertia_vec)
+              call matrix_rotation(3, nB, XPB(:3*nB), inertia_vec)
+              call matrix_rotation(3, nB, XPB(3*nB+1:), inertia_vec)
+              call get_inertia_moments(nB, XPB(:3*nB), massB, inertia, inertia_vec)
+              call get_LMOM_AMOM(3*2*nB, XPB,1, nB, massB, QCOM, PCOM, LMOM, AMOM)
+              call get_angular_velocity(inertia, AMOM, omega)
+              call add_angular_velocity(nB, XPB, massB, omega, -1._dp)
 
-          call RANDOM_NUMBER(r)
-          phi = 2 * pi * r
-          call RANDOM_NUMBER(r)
-          theta = pi * r
-          call RANDOM_NUMBER(r)
-          chi = 2 * pi * r
-          call rotate_euler(nB, XPB, phi, theta, chi)
-          write(sal_unit,*) "Setting euler phi, theta, chi (B) = ", phi, theta, chi
+              call RANDOM_NUMBER(r)
+              phi = 2 * pi * r
+              call RANDOM_NUMBER(r)
+              theta = pi * r
+              call RANDOM_NUMBER(r)
+              chi = 2 * pi * r
+              call rotate_euler(nB, XPB, phi, theta, chi)
+              write(sal_unit,*) "Setting euler phi, theta, chi (B) = ", phi, theta, chi
+          end if
           !-------------------------------
 
           !-------------------------------
