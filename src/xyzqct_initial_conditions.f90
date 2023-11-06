@@ -3,7 +3,7 @@ module xyzqct_initial_conditions
     use xyzqct_settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
-    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam
+    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans
 
     private :: init_cond_mode, bparam
 
@@ -12,6 +12,7 @@ module xyzqct_initial_conditions
     namelist /collision/ &
         Ecoll, &
         Trot, &
+        Ttrans, &
         rini, &
         bmax, &
         bmin
@@ -49,12 +50,18 @@ module xyzqct_initial_conditions
                     write(sal_unit, "(/A)") "Using initial conditions for A+B collision"
                     Ecoll = 0._dp
                     Trot = 0._dp
+                    Ttrans = 0._dp
                     bmin = 0._dp
                     rewind(10)
                     read(10, nml=collision)
                     write(sal_unit, nml=collision)
                     Ecoll = Ecoll/autoeV
                     Trot = Trot * kb / autoJ
+                    Ttrans = Ttrans * kb / autoJ
+                    if (Ecoll > 0._dp .and. Ttrans > 0._dp) then
+                        write(sal_unit,*) "ERROR: Either Ecoll or Ttrans must be zero."
+                        stop
+                    end if
                     if (rini > rfin) then
                         write(sal_unit,*) "ERROR: rini must be smaller than rfin"
                         stop
@@ -237,7 +244,7 @@ module xyzqct_initial_conditions
           real(dp), intent(out) :: XP(ndim)
           real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, r, ang, &
               inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi, mred, mA, mB, &
-              J(4)
+              J(4), erel, erelmax, prob, Erot
           integer :: iat
 
           XP = 0.0_dp
@@ -339,10 +346,23 @@ module xyzqct_initial_conditions
 
           !-------------------------------
           ! Add pZ to system b
-          write(sal_unit,*) "Setting Ecoll / au = ", Ecoll
+          if (Ecoll .ne. 0._dp) then
+              erel = Ecoll
+          else
+              erelmax = 15._dp * Ttrans
+              r = 1.0_dp
+              prob = 0.0_dp
+              do while (r > prob)
+                  call RANDOM_NUMBER(r)
+                  erel = erelmax * r
+                  prob = erel / Ttrans * exp(-erel / Ttrans) * exp(1.0_dp)
+                  call RANDOM_NUMBER(r)
+              end do
+          end if
+          write(sal_unit,*) "Setting relative translational energy / au = ", erel
           mred = mA * mB / (mA + mB)
           PCOM = 0.0_dp
-          PCOM(3)=sqrt(2._dp * mred * Ecoll)
+          PCOM(3)=sqrt(2._dp * mred * erel)
           do iat=1,nA
               XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) = &
                   XPA(3*nA+3*(iat-1)+1:3*nA+3*iat) + PCOM * massA(iat) / mA
