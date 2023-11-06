@@ -1,5 +1,5 @@
 module xyzqct_initial_conditions
-    use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi
+    use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi, kb, autoJ
     use xyzqct_settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
@@ -54,6 +54,7 @@ module xyzqct_initial_conditions
                     read(10, nml=collision)
                     write(sal_unit, nml=collision)
                     Ecoll = Ecoll/autoeV
+                    Trot = Trot * kb / autoJ
                     if (rini > rfin) then
                         write(sal_unit,*) "ERROR: rini must be smaller than rfin"
                         stop
@@ -235,7 +236,8 @@ module xyzqct_initial_conditions
           implicit none
           real(dp), intent(out) :: XP(ndim)
           real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, r, ang, &
-              inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi, mred, mA, mB
+              inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi, mred, mA, mB, &
+              J(4)
           integer :: iat
 
           XP = 0.0_dp
@@ -275,6 +277,12 @@ module xyzqct_initial_conditions
               call get_LMOM_AMOM(3*2*nA, XPA,1, nA, massA, QCOM, PCOM, LMOM, AMOM)
               call get_angular_velocity(inertia, AMOM, omega)
               call add_angular_velocity(nA, XPA, massA, omega, -1._dp)
+              if (Trot .gt. 0._dp) then
+                  call sample_J(inertia, Trot, J)
+                  write(sal_unit,*) "Setting Jx, Jy, Jz, J (A):", J
+                  call get_angular_velocity(inertia, J(1:3), omega)
+                  call add_angular_velocity(nA, XPA, massA, omega, 1._dp)
+              end if
 
               call RANDOM_NUMBER(r)
               phi = 2 * pi * r
@@ -295,6 +303,12 @@ module xyzqct_initial_conditions
               call get_LMOM_AMOM(3*2*nB, XPB,1, nB, massB, QCOM, PCOM, LMOM, AMOM)
               call get_angular_velocity(inertia, AMOM, omega)
               call add_angular_velocity(nB, XPB, massB, omega, -1._dp)
+              if (Trot .gt. 0._dp) then
+                  call sample_J(inertia, Trot, J)
+                  write(sal_unit,*) "Setting Jx, Jy, Jz, J (B):", J
+                  call get_angular_velocity(inertia, J(1:3), omega)
+                  call add_angular_velocity(nB, XPB, massB, omega, 1._dp)
+              end if
 
               call RANDOM_NUMBER(r)
               phi = 2 * pi * r
@@ -351,5 +365,58 @@ module xyzqct_initial_conditions
               XP(3*(iat-1)+1:3*iat) = XP(3*(iat-1)+1:3*iat) - QCOM
           end do
           flush(sal_unit)
+      end subroutine
+
+      subroutine sample_J(inertia, T, J)
+          ! Faraday Discuss. Chem. Soc., 1973,55, 93-99
+          ! VENUS manual
+          implicit none
+          real(dp), intent(in) :: inertia(3), T
+          real(dp), intent(out) :: J(4)
+          integer :: nlin, ix
+          real(dp) :: prob, r, diff1, diff2, Jmax, inertia_mean
+
+          J = 0.0_dp
+          nlin = 0
+          diff1 = abs(inertia(1) - inertia(2))
+          diff2 = abs(inertia(3) - inertia(2))
+
+          if (diff1 > diff2) then
+              ix = 1 ! sample Jx
+          else
+              ix = 3 ! sample Jz
+          end if
+
+          if (abs(inertia(1)) < 1e-10 .and. diff2 < 1e-10) nlin = 1 ! linear molecule
+
+          if (nlin == 0) then
+              Jmax = 25._dp * inertia(ix) * T
+              r = 1.0_dp
+              prob = 0.0_dp
+              do while (r > prob)
+                  call RANDOM_NUMBER(r)
+                  J(ix) = Jmax * r
+                  call RANDOM_NUMBER(r)
+                  if (r > 0.5_dp) J(ix) = -J(ix)
+                  prob = exp(-J(ix)**2 / (2._dp * inertia(ix) * T))
+                  call RANDOM_NUMBER(r)
+              end do
+          end if
+
+          if (nlin == 1 .or. ix == 1) then
+              inertia_mean = sqrt(inertia(2) * inertia(3))
+              call RANDOM_NUMBER(r)
+              J(4) = sqrt(J(1)**2 - 2 * inertia_mean * T * log(1._dp - r))
+              call RANDOM_NUMBER(r)
+              J(2) = sqrt(J(4)**2 - J(1)**2) * sin(2._dp * pi * r)
+              J(3) = sqrt(J(4)**2 - J(1)**2) * cos(2._dp * pi * r)
+          else
+              inertia_mean = sqrt(inertia(1) * inertia(2))
+              call RANDOM_NUMBER(r)
+              J(4) = sqrt(J(3)**2 - 2 * inertia_mean * T * log(1._dp - r))
+              call RANDOM_NUMBER(r)
+              J(1) = sqrt(J(4)**2 - J(3)**2) * sin(2._dp * pi * r)
+              J(2) = sqrt(J(4)**2 - J(3)**2) * cos(2._dp * pi * r)
+          end if
       end subroutine
 end module xyzqct_initial_conditions
