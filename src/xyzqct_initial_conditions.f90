@@ -285,8 +285,9 @@ module xyzqct_initial_conditions
               call get_angular_velocity(inertia, AMOM, omega)
               call add_angular_velocity(nA, XPA, massA, omega, -1._dp)
               if (Trot .gt. 0._dp) then
-                  call sample_J(inertia, Trot, J)
+                  call sample_J(inertia, Trot, J, Erot)
                   write(sal_unit,*) "Setting Jx, Jy, Jz, J (A):", J
+                  write(sal_unit,*) "Rotational energy /au (A):", Erot
                   call get_angular_velocity(inertia, J(1:3), omega)
                   call add_angular_velocity(nA, XPA, massA, omega, 1._dp)
               end if
@@ -311,8 +312,9 @@ module xyzqct_initial_conditions
               call get_angular_velocity(inertia, AMOM, omega)
               call add_angular_velocity(nB, XPB, massB, omega, -1._dp)
               if (Trot .gt. 0._dp) then
-                  call sample_J(inertia, Trot, J)
+                  call sample_J(inertia, Trot, J, Erot)
                   write(sal_unit,*) "Setting Jx, Jy, Jz, J (B):", J
+                  write(sal_unit,*) "Rotational energy /au (B):", Erot
                   call get_angular_velocity(inertia, J(1:3), omega)
                   call add_angular_velocity(nB, XPB, massB, omega, 1._dp)
               end if
@@ -387,14 +389,14 @@ module xyzqct_initial_conditions
           flush(sal_unit)
       end subroutine
 
-      subroutine sample_J(inertia, T, J)
+      subroutine sample_J(inertia, T, J, Erot)
           ! Faraday Discuss. Chem. Soc., 1973,55, 93-99
           ! VENUS manual
           implicit none
           real(dp), intent(in) :: inertia(3), T
           real(dp), intent(out) :: J(4)
           integer :: nlin, ix
-          real(dp) :: prob, r, diff1, diff2, Jmax, inertia_mean
+          real(dp) :: prob, r, diff1, diff2, Jmax, inertia_mean, Erot
 
           J = 0.0_dp
           nlin = 0
@@ -421,6 +423,7 @@ module xyzqct_initial_conditions
                   prob = exp(-J(ix)**2 / (2._dp * inertia(ix) * T))
                   call RANDOM_NUMBER(r)
               end do
+              Erot = J(ix)**2 / inertia(ix)
           end if
 
           if (nlin == 1 .or. ix == 1) then
@@ -430,6 +433,7 @@ module xyzqct_initial_conditions
               call RANDOM_NUMBER(r)
               J(2) = sqrt(J(4)**2 - J(1)**2) * sin(2._dp * pi * r)
               J(3) = sqrt(J(4)**2 - J(1)**2) * cos(2._dp * pi * r)
+              Erot = (J(2)**2 / inertia(2) + J(3)**2 / inertia(3) + Erot) / 2._dp
           else
               inertia_mean = sqrt(inertia(1) * inertia(2))
               call RANDOM_NUMBER(r)
@@ -437,6 +441,7 @@ module xyzqct_initial_conditions
               call RANDOM_NUMBER(r)
               J(1) = sqrt(J(4)**2 - J(3)**2) * sin(2._dp * pi * r)
               J(2) = sqrt(J(4)**2 - J(3)**2) * cos(2._dp * pi * r)
+              Erot = (J(1)**2 / inertia(1) + J(2)**2 / inertia(2) + Erot) / 2._dp
           end if
       end subroutine
 end module xyzqct_initial_conditions
