@@ -3,7 +3,7 @@ module xyzqct_initial_conditions
     use xyzqct_settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
-    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans
+    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans, A_capture, n_capture
 
     private :: init_cond_mode, bparam
 
@@ -15,7 +15,9 @@ module xyzqct_initial_conditions
         Ttrans, &
         rini, &
         bmax, &
-        bmin
+        bmin, &
+        A_capture, &
+        n_capture
 
     ! init_cond_mode:
     ! 0 => Read from file
@@ -52,6 +54,8 @@ module xyzqct_initial_conditions
                     Trot = 0._dp
                     Ttrans = 0._dp
                     bmin = 0._dp
+                    A_capture = 0._dp
+                    n_capture = 0._dp
                     rewind(10)
                     read(10, nml=collision)
                     write(sal_unit, nml=collision)
@@ -105,9 +109,11 @@ module xyzqct_initial_conditions
             end select
         end subroutine
 
-        subroutine get_init_cond(XP)
+        subroutine get_init_cond(XP, propagate)
             implicit none
             real(dp), intent(out) :: XP(ndim)
+            logical, intent(out) :: propagate
+            propagate = .true.
             select case(init_cond_mode)
                 case(0)
                     call from_file_init_cond(max_condA, cond_unitA, nA, XP)
@@ -116,7 +122,7 @@ module xyzqct_initial_conditions
                 case(2)
                     call NM_init_cond_T(XP)
                 case(3)
-                    call AplusB_init_cond(XP)
+                    call AplusB_init_cond(XP, propagate)
             end select 
         end subroutine
 
@@ -236,18 +242,20 @@ module xyzqct_initial_conditions
           write(sal_unit, *) "Qmax =", Qmax
       end subroutine
 
-      subroutine AplusB_init_cond(XP)
+      subroutine AplusB_init_cond(XP, propagate)
           use xyzqct_physics, only: get_COM, get_inertia_moments, matrix_rotation, get_angular_velocity, &
               add_angular_velocity, get_LMOM_AMOM, rotate_euler
           use xyzqct_settings, only: nA, nB, massA, massB, nat, mass
           implicit none
           real(dp), intent(out) :: XP(ndim)
+          logical, intent(out) :: propagate
           real(dp) :: XPA(3*2*nA), XPB(3*2*nB), QCOM(3), PCOM(3), mtot, r, ang, &
               inertia(3), inertia_vec(3,3), LMOM(3), AMOM(3), omega(3), phi, theta, chi, mred, mA, mB, &
               J(4), erel, erelmax, prob, Erot
           integer :: iat
 
           XP = 0.0_dp
+          propagate = .true.
           call from_file_init_cond(max_condA, cond_unitA, nA, XPA)
           call from_file_init_cond(max_condB, cond_unitB, nB, XPB)
 
@@ -331,22 +339,6 @@ module xyzqct_initial_conditions
           !-------------------------------
 
           !-------------------------------
-          ! Move system B to rini with bparam
-          call RANDOM_NUMBER(r)
-          bparam = bmin + (bmax - bmin) * r
-          write(sal_unit,*) "Setting bmax / au = ", bparam
-          call RANDOM_NUMBER(r)
-          ang = 2 * pi * r
-          QCOM = 0.0_dp
-          QCOM(1) = bparam * cos(ang)
-          QCOM(2) = bparam * sin(ang)
-          QCOM(3) = sqrt(abs(rini**2-bparam**2))
-          do iat=1,nB
-              XPB(3*(iat-1)+1:3*iat) = XPB(3*(iat-1)+1:3*iat) + QCOM
-          end do
-          !-------------------------------
-
-          !-------------------------------
           ! Add pZ to system b
           if (Ecoll .ne. 0._dp) then
               erel = Ecoll
@@ -374,6 +366,30 @@ module xyzqct_initial_conditions
                   XPB(3*nB+3*(iat-1)+1:3*nB+3*iat) - PCOM * massB(iat) / mB
           end do
           !-------------------------------
+
+          !-------------------------------
+          ! Move system B to rini with bparam
+          call RANDOM_NUMBER(r)
+          bparam = bmin + (bmax - bmin) * r
+          if (A_capture .ne. 0._dp) then
+              propagate = bparam <= A_capture / erel**n_capture
+              if (.not. propagate) then
+                  write(sal_unit,*) &
+                  "Trajectory will not propagate because bmax is too high according to capture model."
+              end if
+          end if
+          write(sal_unit,*) "Setting bmax / au = ", bparam
+          call RANDOM_NUMBER(r)
+          ang = 2 * pi * r
+          QCOM = 0.0_dp
+          QCOM(1) = bparam * cos(ang)
+          QCOM(2) = bparam * sin(ang)
+          QCOM(3) = sqrt(abs(rini**2-bparam**2))
+          do iat=1,nB
+              XPB(3*(iat-1)+1:3*iat) = XPB(3*(iat-1)+1:3*iat) + QCOM
+          end do
+          !-------------------------------
+
 
           XP(1:3*nA) = XPA(1:3*nA)
           XP(3*nA+1:3*nA+3*nB) = XPB(1:3*nB)

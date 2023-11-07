@@ -17,7 +17,7 @@ program QCT
                 potener, print_time, tprev, Eini, Eend, &
                 init_cond_print, final_t, &
                 QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed
-    logical :: open_unit
+    logical :: open_unit, prop
     integer, allocatable :: seed(:)
 
     namelist /input/ &
@@ -63,6 +63,8 @@ program QCT
     call RANDOM_SEED(size=seed_size)
     allocate(seed(seed_size))
     do itraj=nini, ntrajs
+        final_t = 0._dp
+        elapsed = 0._dp
         seed = itraj
         call RANDOM_SEED(PUT=seed) ! To guarantee that trajectories are reproducible.
                                    ! There are probably better ways...
@@ -75,7 +77,7 @@ program QCT
             open(xyz_unit, file=trim(traj_file), status="replace")
         end if
         call reset_propagator()
-        call get_init_cond(XPini)
+        call get_init_cond(XPini, prop)
         XP = XPini
 
         call total_ener(0._dp, XP, kener, potener)
@@ -87,7 +89,9 @@ program QCT
         write(sal_unit,*) "  Linear momentum / au:", PCOM
         write(sal_unit,*) " Angular momentum / au:", AMOM
         call flush(sal_unit)
-        call propagate(XP, final_t, elapsed)
+        if (prop) then
+            call propagate(XP, final_t, elapsed)
+        end if
         call total_ener(final_t, XP, kener, potener)
         call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
         call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
