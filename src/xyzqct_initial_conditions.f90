@@ -370,7 +370,7 @@ module xyzqct_initial_conditions
           !-------------------------------
           ! Move system B to rini with bparam
           call RANDOM_NUMBER(r)
-          bparam = bmin + (bmax - bmin) * r
+          bparam = bmin + (bmax - bmin) * sqrt(r)
           if (A_capture .ne. 0._dp) then
               propagate = bparam <= A_capture / erel**n_capture
               if (.not. propagate) then
@@ -378,7 +378,7 @@ module xyzqct_initial_conditions
                   "Trajectory will not propagate because bmax is too high according to capture model."
               end if
           end if
-          write(sal_unit,*) "Setting bmax / au = ", bparam
+          write(sal_unit,*) "Setting bparam / au = ", bparam
           call RANDOM_NUMBER(r)
           ang = 2 * pi * r
           QCOM = 0.0_dp
