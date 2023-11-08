@@ -433,7 +433,7 @@ module xyzqct_initial_conditions
               prob = 0.0_dp
               do while (r > prob)
                   call RANDOM_NUMBER(r)
-                  J(ix) = Jmax * r
+                  J(ix) = real(floor(Jmax * r), dp)
                   call RANDOM_NUMBER(r)
                   if (r > 0.5_dp) J(ix) = -J(ix)
                   prob = exp(-J(ix)**2 / (2._dp * inertia(ix) * T))
@@ -445,7 +445,7 @@ module xyzqct_initial_conditions
           if (nlin == 1 .or. ix == 1) then
               inertia_mean = sqrt(inertia(2) * inertia(3))
               call RANDOM_NUMBER(r)
-              J(4) = sqrt(J(1)**2 - 2 * inertia_mean * T * log(1._dp - r))
+              J(4) = real(floor(sqrt(J(1)**2 - 2 * inertia_mean * T * log(1._dp - r))), dp)
               call RANDOM_NUMBER(r)
               J(2) = sqrt(J(4)**2 - J(1)**2) * sin(2._dp * pi * r)
               J(3) = sqrt(J(4)**2 - J(1)**2) * cos(2._dp * pi * r)
@@ -453,7 +453,7 @@ module xyzqct_initial_conditions
           else
               inertia_mean = sqrt(inertia(1) * inertia(2))
               call RANDOM_NUMBER(r)
-              J(4) = sqrt(J(3)**2 - 2 * inertia_mean * T * log(1._dp - r))
+              J(4) = real(floor(sqrt(J(3)**2 - 2 * inertia_mean * T * log(1._dp - r))), dp)
               call RANDOM_NUMBER(r)
               J(1) = sqrt(J(4)**2 - J(3)**2) * sin(2._dp * pi * r)
               J(2) = sqrt(J(4)**2 - J(3)**2) * cos(2._dp * pi * r)
