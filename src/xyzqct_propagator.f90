@@ -3,20 +3,22 @@ module xyzqct_propagator
     use ddeabm_module, wp => ddeabm_rk
     use xyzqct_settings, only: ndim
     type(ddeabm_with_event_class) :: s
-    real(dp) :: gval, relerr, abserr, tottime, tprev, rfin, print_time, deltat, deltat2
+    real(dp) :: gval, relerr, abserr, tottime, tprev, rfin, print_time, deltat, deltat2, tprev_as, &
+        print_time_as
     integer :: max_step_factor, iprop
 
     public :: xyz_report, checkend
     private:: iprop
     contains
-        subroutine set_propagator(ipropagator, ttime, ptime, r)
+        subroutine set_propagator(ipropagator, ttime, ptime, ptime_as, r)
             ! Select propagator:
             implicit none
             integer, intent(in) :: ipropagator
-            real(dp), intent(in) :: ttime, ptime, r
+            real(dp), intent(in) :: ttime, ptime, r, ptime_as
             iprop = ipropagator
             tottime = ttime
             print_time = ptime
+            print_time_as = ptime_as
             rfin = r
             select case(iprop)
                 case(0)
@@ -46,6 +48,7 @@ module xyzqct_propagator
         subroutine reset_propagator()
             implicit none
             tprev = 0._dp
+            tprev_as = 0._dp
             select case(iprop)
                 case(0)
                     call s%first_call()
@@ -163,7 +166,8 @@ module xyzqct_propagator
                 end do
             end if
 
-            if (Ts > 0 .and. t > Ts) then
+            if (Ts > 0 .and. t > Ts .and. t - tprev_as > print_time_as) then
+                tprev_as = t
                 write(as_unit,*) XP
             end if
         end subroutine

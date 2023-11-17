@@ -53,11 +53,12 @@ program QCT
     ! Convert times
     tottime=tottime/autofs
     print_time=print_time/autofs
+    init_cond_print=init_cond_print/autofs
 
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
     call get_potential(potential_mode)
-    call set_propagator(propagator_mode, tottime, print_time, rfin)
+    call set_propagator(propagator_mode, tottime, print_time, init_cond_print, rfin)
     close(10)
 
     call RANDOM_SEED(size=seed_size)
