@@ -87,34 +87,28 @@ module xyzqct_hamiltonian
         integer :: ifreq, i, j
         real(dp), intent(in) :: t, posxyz(ndim/2)
         real(dp), intent(out) :: pot, derxyz(ndim/2)
-        real(dp) :: Q(nfreqs), P(nfreqs), aux, q_(ndim/2), mass_(ndim/2)
+        real(dp) :: Q(nfreqs), aux, q_(ndim/2), mass_(ndim/2)
 
         Q = 0._dp
         q_ = 0._dp
-        P = 0._dp
         pot = 0._dp
         derxyz = 0._dp
 
         do i=1,ndim/2
             mass_(i) = sqrt(mass((i-1)/ 3 + 1))
             q_(i) = (posxyz(i) - Xeq(i)) * mass_(i)
+            do ifreq=1, nfreqs
+                    Q(ifreq) = Q(ifreq) + CXQ(i, ifreq) * q_(i)
+            end do
         end do
+
         do i =1, ndim/2
             do ifreq=1, nfreqs
-                do j=1, ndim/2
-                    derxyz(i) = derxyz(i) + CXQ(j, ifreq) * q_(j) * freqs(ifreq)**2 * CXQ(i, ifreq)
-                end do
+                derxyz(i) = derxyz(i) + CXQ(i, ifreq) * freqs(ifreq)**2 * Q(ifreq)
             end do
             derxyz(i) = derxyz(i) * mass_(i)
         end do
-        do ifreq=1, nfreqs
-            aux = 0._dp
-            do i=1,ndim/2
-                aux = aux + CXQ(i, ifreq) * q_(i)
-            end do
-            pot = pot + (freqs(ifreq) * aux)**2
-        end do
-        pot = pot / 2._dp
+        pot = 5e-1 * sum(freqs**2 * Q**2)
     end subroutine NMpotential
 
     subroutine adiabatic_switching(t, posxyz, pot, derxyz)
