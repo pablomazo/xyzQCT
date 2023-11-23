@@ -82,6 +82,7 @@ module xyzqct_physics
         inertia_mat(3,1) = inertia_mat(1,3)
         inertia_mat(3,2) = inertia_mat(2,3)
         call eigh(3, inertia_mat, inertia)
+        inertia_mat = transpose(inertia_mat)
     end subroutine
 
     subroutine matrix_rotation(n,m, A, R)
@@ -89,18 +90,18 @@ module xyzqct_physics
         integer, intent(in) :: n, m
         real(dp), intent(inout) :: A(n*m)
         real(dp), intent(in) :: R(n,n)
-        real(dp) :: aux(m,n), tmp(m,n)
+        real(dp) :: aux(n,m), tmp(n,m)
         integer :: i, j
 
         do i=1,m ! nat
             do j=1,n ! ncoor
-                aux(i,j) = A(3 * (i-1)+j)
+                aux(j,i) = A(3 * (i-1)+j)
             end do
         end do
-        tmp = matmul(aux, R)
+        tmp = matmul(R, aux)
         do i=1,m
             do j=1,n
-                A(3*(i-1)+j) = tmp(i,j)
+                A(3*(i-1)+j) = tmp(j,i)
             end do
         end do
     end subroutine
