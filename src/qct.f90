@@ -6,7 +6,7 @@ program QCT
     use xyzqct_hamiltonian, only: derivs, get_potential, total_ener
     use xyzqct_initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
     use xyzqct_physics, only: get_COM, get_LMOM_AMOM
-    use xyzqct_propagator, only: set_propagator, propagate, reset_propagator
+    use xyzqct_propagator, only: set_propagator, propagate
     use ddeabm_module, wp => ddeabm_rk
     use xyzqct_utils, only: code_starter
     implicit none
@@ -58,7 +58,7 @@ program QCT
     call initial_settings()
     call set_init_cond(initcond_mode) ! set initial conditions.
     call get_potential(potential_mode)
-    call set_propagator(propagator_mode, tottime, print_time, init_cond_print, rfin)
+    call set_propagator(propagator_mode)
     close(10)
 
     call RANDOM_SEED(size=seed_size)
@@ -77,7 +77,6 @@ program QCT
             write(traj_file,'("traj_",i6.6,".xyz")')itraj
             open(xyz_unit, file=trim(traj_file), status="replace")
         end if
-        call reset_propagator()
         call get_init_cond(XPini, prop)
         XP = XPini
 
@@ -91,7 +90,7 @@ program QCT
         write(sal_unit,*) " Angular momentum / au:", AMOM
         call flush(sal_unit)
         if (prop) then
-            call propagate(XP, final_t, elapsed)
+            call propagate(XP, 0.0_dp, tottime, print_time, init_cond_print, rfin, final_t, elapsed)
         end if
         call total_ener(final_t, XP, kener, potener)
         call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)

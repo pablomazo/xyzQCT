@@ -10,16 +10,11 @@ module xyzqct_propagator
     public :: xyz_report, checkend
     private:: iprop
     contains
-        subroutine set_propagator(ipropagator, ttime, ptime, ptime_as, r)
+        subroutine set_propagator(ipropagator)
             ! Select propagator:
             implicit none
             integer, intent(in) :: ipropagator
-            real(dp), intent(in) :: ttime, ptime, r, ptime_as
             iprop = ipropagator
-            tottime = ttime
-            print_time = ptime
-            print_time_as = ptime_as
-            rfin = r
             select case(iprop)
                 case(0)
                     write(sal_unit,"(/A/)") "Using DDEABM propagator."
@@ -33,27 +28,19 @@ module xyzqct_propagator
             end select
         end subroutine
 
-        subroutine propagate(XP, final_t, elapsed)
+        subroutine propagate(XP, ti, tf, ptime, ptime_as, r, final_t, elapsed)
             implicit none
+            real(dp), intent(in) :: ti, tf, ptime, ptime_as, r
             real(dp), intent(inout) :: XP(ndim)
             real(dp), intent(out) :: final_t, elapsed
+            print_time = ptime
+            print_time_as = ptime_as
+            rfin = r
             select case(iprop)
                 case(0)
-                    call propagate_DDEABM(XP, final_t, elapsed)
+                    call propagate_DDEABM(XP, ti, tf, final_t, elapsed)
                 case(1)
-                    call propagate_verlet(XP, final_t, elapsed)
-            end select
-        end subroutine
-
-        subroutine reset_propagator()
-            implicit none
-            tprev = 0._dp
-            tprev_as = 0._dp
-            select case(iprop)
-                case(0)
-                    call s%first_call()
-                case(1)
-                    call reset_verlet()
+                    call propagate_verlet(XP, ti, tf, final_t, elapsed)
             end select
         end subroutine
 
@@ -69,20 +56,23 @@ module xyzqct_propagator
             rewind(10)
             read(10, nml=propagator, iostat=ios)
             write(sal_unit, nml=propagator)
-            totalsteps = int(max_step_factor * tottime)
-            call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
-                report=xyz_report, g=checkend, root_tol=1e-10_dp)
         end subroutine
 
-        subroutine propagate_DDEABM(XP, final_t, elapsed)
+        subroutine propagate_DDEABM(XP, ti, tf, final_t, elapsed)
+            use xyzqct_hamiltonian, only: derivs
             implicit none
+            real(dp), intent(in) :: ti, tf
             real(dp), intent(inout) :: XP(ndim)
             real(dp), intent(out) :: elapsed, final_t
             real(dp) :: timein, timeout
-            integer :: time_init, time_rate, time_end, idid
+            integer :: time_init, time_rate, time_end, idid, totalsteps
 
-            timein = 0._dp
-            timeout = tottime
+            totalsteps = int(max_step_factor * tf)
+            timein = ti
+            timeout = tf
+            call s%first_call()
+            call s%initialize_event(ndim, maxnum=totalsteps, df=derivs, rtol=[relerr], atol=[abserr], &
+                report=xyz_report, g=checkend, root_tol=1e-10_dp)
             call system_clock(time_init, time_rate)
             call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
             call system_clock(time_end)
@@ -110,23 +100,24 @@ module xyzqct_propagator
             deltat2 = deltat / 2._dp
         end subroutine
 
-        subroutine propagate_verlet(XP, final_t, elapsed)
+        subroutine propagate_verlet(XP, ti, tf, final_t, elapsed)
             use xyzqct_hamiltonian, only: derivs
             use xyzqct_settings, only: nat, mass
             implicit none
+            real(dp), intent(in) :: ti, tf
             real(dp), intent(inout) :: XP(ndim)
             real(dp), intent(out) :: elapsed, final_t
             real(dp) :: time, XPder(ndim), is_end, mass_(ndim/2)
             integer :: numsteps, istep, iat
             integer :: time_init, time_rate, time_end
 
-            numsteps = int(tottime / deltat) + 1
+            numsteps = int((tf - ti) / deltat) + 1
             do iat=1,nat
                 mass_(3*(iat-1)+1:3*iat) = mass(iat)
             end do
 
             call system_clock(time_init, time_rate)
-            time = 0._dp
+            time = ti
             call derivs(s, time, XP, XPder)
             do istep=1, numsteps
                 time = (istep - 1) * deltat
@@ -141,9 +132,6 @@ module xyzqct_propagator
             call system_clock(time_end)
             elapsed = real(time_end - time_init) / real(time_rate)
             final_t = time
-        end subroutine
-
-        subroutine reset_verlet()
         end subroutine
 
         subroutine xyz_report(me, t, XP)
