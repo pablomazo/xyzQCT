@@ -2,21 +2,23 @@ program QCT
     use xyzqct_constants, only: dp, autofs, autouma, autocm_1, autoA, &
         sal_unit, xyz_unit, end_unit, as_unit
     use xyzqct_settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
-        initcond_mode, temperature, propagator_mode, nB, nat, rfin
+        initcond_mode, temperature, propagator_mode, nB, nat, rfin, Ts
     use xyzqct_hamiltonian, only: derivs, get_potential, total_ener
     use xyzqct_initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
-    use xyzqct_physics, only: get_COM, get_LMOM_AMOM
+    use xyzqct_physics, only: get_COM, get_LMOM_AMOM, get_angular_velocity, add_angular_velocity, &
+        get_inertia_moments, matrix_rotation
     use xyzqct_propagator, only: set_propagator, propagate
     use ddeabm_module, wp => ddeabm_rk
     use xyzqct_utils, only: code_starter
     implicit none
 
     character(len=80) :: traj_file
-    integer :: ntrajs, itraj, nini, seed_size
+    integer :: ntrajs, itraj, nini, seed_size, iat
     real(dp) :: tottime, kener, &
-                potener, print_time, tprev, Eini, Eend, &
+                potener, print_time, tprev, Eini, Eend, E_s,&
                 init_cond_print, final_t, &
-                QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed
+                QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed, &
+                inertia(3), inertia_vec(3,3), omega(3)
     logical :: open_unit, prop
     integer, allocatable :: seed(:)
 
@@ -90,7 +92,38 @@ program QCT
         write(sal_unit,*) " Angular momentum / au:", AMOM
         call flush(sal_unit)
         if (prop) then
-            call propagate(XP, 0.0_dp, tottime, print_time, init_cond_print, rfin, final_t, elapsed)
+            if (potential_mode .eq. 2) then
+                ! Adiabatic switching propagation
+                call propagate(XP, 0.0_dp, Ts, print_time, init_cond_print, rfin, final_t, elapsed)
+                call total_ener(final_t, XP, kener, potener)
+                E_s = (kener + potener) * autocm_1
+                write(sal_unit,*) "Ener after switch / cm-1  :", E_s
+
+                ! Remove spurious angular momenta
+                call get_COM(ndim, XP,1, nat, mass, QCOM, PCOM)
+                do iat=1,nat
+                    XP(3*(iat-1)+1:3*iat) = XP(3*(iat-1)+1:3*iat) - QCOM
+                end do
+                call get_LMOM_AMOM(ndim, XP,1, nat, mass, QCOM, PCOM, LMOM, AMOM)
+                write(sal_unit,*) "Total angular momentum after switch: ", sqrt(sum(AMOM**2))
+                write(sal_unit,*) "Filtering angular momentum..."
+                call get_inertia_moments(nat, XP(:3*nat), mass, inertia, inertia_vec)
+                call matrix_rotation(3, nat, XP(:3*nat), inertia_vec)
+                call matrix_rotation(3, nat, XP(3*nat+1:), inertia_vec)
+                call get_LMOM_AMOM(ndim, XP,1, nat, mass, QCOM, PCOM, LMOM, AMOM)
+                call get_angular_velocity(inertia, AMOM, omega)
+                call add_angular_velocity(nat, XP, mass, omega, -1._dp)
+                call total_ener(final_t, XP, kener, potener)
+                Eend = (kener + potener) * autocm_1
+                write(sal_unit,*) "Scaling momenta to match energy after switch..."
+                do while (abs(E_s - Eend) / E_s > 1e-3)
+                    XP(3*nat+1:) = XP(3*nat+1:) * (E_s / Eend)
+                    call total_ener(final_t, XP, kener, potener)
+                    Eend = (kener + potener) * autocm_1
+                end do
+                write(sal_unit,*) "Ener after angular momentum removal / cm-1  :", Eend
+            end if
+            call propagate(XP, Ts, tottime, print_time, init_cond_print, rfin, final_t, elapsed)
         end if
         call total_ener(final_t, XP, kener, potener)
         call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
