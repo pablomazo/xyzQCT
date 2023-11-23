@@ -87,9 +87,9 @@ program QCT
         call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
         Eini = (kener + potener) * autocm_1
         write(sal_unit,*) "Ener(initial) / cm-1:", Eini
-        write(sal_unit,*) "              COM / au:", QCOM
-        write(sal_unit,*) "  Linear momentum / au:", PCOM
-        write(sal_unit,*) " Angular momentum / au:", AMOM
+        write(sal_unit,*) " COM / au:", QCOM
+        write(sal_unit,*) " |P| / au:", sqrt(sum(PCOM)**2)
+        write(sal_unit,*) " |L| / au:", sqrt(sum(AMOM**2))
         call flush(sal_unit)
         if (prop) then
             if (potential_mode .eq. 2) then
@@ -130,9 +130,9 @@ program QCT
         call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
         Eend = (kener + potener) * autocm_1
         write(sal_unit,*) "Ener(final) / cm-1  :", Eend
-        write(sal_unit,*) "              COM / au:", QCOM
-        write(sal_unit,*) "  Linear momentum / au:", LMOM
-        write(sal_unit,*) " Angular momentum / au:", AMOM
+        write(sal_unit,*) " COM / au:", QCOM
+        write(sal_unit,*) " |P| / au:", sqrt(sum(PCOM)**2)
+        write(sal_unit,*) " |L| / au:", sqrt(sum(AMOM**2))
         write(sal_unit,*) "Ener(delta) / cm-1  :", Eend - Eini
         write(sal_unit,*) "Final time / fs:", final_t * autofs
         write(sal_unit,*) "End of traj =", itraj
