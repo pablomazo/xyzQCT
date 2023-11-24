@@ -36,6 +36,7 @@ module xyzqct_propagator
             print_time = ptime
             print_time_as = ptime_as
             rfin = r
+            tprev = 0._dp
             select case(iprop)
                 case(0)
                     call propagate_DDEABM(XP, ti, tf, final_t, elapsed)
