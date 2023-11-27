@@ -148,10 +148,15 @@ module xyzqct_initial_conditions
 
         subroutine NM_init_cond(XP)
             use xyzqct_constants, only: pi
+            use xyzqct_physics, only: get_COM, get_LMOM_AMOM, matrix_rotation, get_angular_velocity, &
+                add_angular_velocity, get_inertia_moments
+            use xyzqct_hamiltonian, only: total_ener
             implicit none
             integer :: ix, ifreq
             real(dp), intent(out) :: XP(ndim)
-            real(dp) :: phase(nfreqs), Q(nfreqs), P(nfreqs), mass
+            real(dp) :: phase(nfreqs), Q(nfreqs), P(nfreqs), mass, &
+                QCOM(3), PCOM(3), LMOM(3), AMOM(3), inertia(3), inertia_vec(3,3), omega(3), &
+                kener, potener, E0, E
 
             amp = sqrt((2._dp * Qnum +1._dp) / freqs) ! Maximum NM amplitudes
 
@@ -171,6 +176,25 @@ module xyzqct_initial_conditions
                 XP(ndim/2 + ix) = XP(ndim/2 + ix) * mass
             end do
             XP(:ndim/2) = XP(:ndim/2) + Xeq
+
+            call total_ener(0._dp, XP, kener, potener)
+            E0 = kener + potener
+            call get_inertia_moments(nA, XP(:3*nA), massA, inertia, inertia_vec)
+            call matrix_rotation(3, nA, XP(:3*nA), inertia_vec)
+            call matrix_rotation(3, nA, XP(3*nA+1:), inertia_vec)
+            call get_COM(ndim, XP, 1, nA, massA, QCOM, PCOM)
+            call get_LMOM_AMOM(ndim, XP,1, nA, massA, QCOM, PCOM, LMOM, AMOM)
+            write(sal_unit,*) "Total angular of initial condition: ", sqrt(sum(AMOM**2))
+            call get_angular_velocity(inertia, AMOM, omega)
+            call add_angular_velocity(nA, XP, massA, omega, -1._dp)
+            E = 1e10_dp
+            do while (abs(E - E0) / E0 > 1e-3)
+                XP(3*nA+1:) = XP(3*nA+1:) * E0 / E
+                call total_ener(0._dp, XP, kener, potener)
+                E = (kener + potener)
+            end do
+            write(sal_unit,*) "Filtered angular momentum from initial condition ..."
+            write(sal_unit,*) "Added vibrational energy to compensate rotational energy removal."
         end subroutine
 
         subroutine NM_init_cond_T(XP)
