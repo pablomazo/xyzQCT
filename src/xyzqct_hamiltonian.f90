@@ -81,7 +81,62 @@ module xyzqct_hamiltonian
         call potxyz(posxyz, pot, derxyz)
     end subroutine userpot
 
+    subroutine NM_pot(posxyz, pot)
+        use  xyzqct_settings, only: nfreqs, freqs, CXQ, Xeq
+        use xyzqct_physics, only: matrix_rotation, rotate_to_eckart
+        implicit none
+        integer :: ifreq, i, j
+        real(dp), intent(in) :: posxyz(ndim/2)
+        real(dp), intent(out) :: pot
+        real(dp) :: Q(nfreqs), q_(ndim/2), mass_(ndim/2), Teck(3,3), rot_pos(ndim/2)
+
+        Q = 0._dp
+        q_ = 0._dp
+        pot = 0._dp
+
+        call rotate_to_eckart(nat, posxyz, Xeq, mass, Teck)
+        rot_pos = posxyz
+        call matrix_rotation(3, nat, rot_pos, Teck)
+        do i=1,ndim/2
+            mass_(i) = sqrt(mass((i-1)/ 3 + 1))
+            q_(i) = (rot_pos(i) - Xeq(i)) * mass_(i)
+            do ifreq=1, nfreqs
+                    Q(ifreq) = Q(ifreq) + CXQ(i, ifreq) * q_(i)
+            end do
+        end do
+        pot = 5e-1 * sum(freqs**2 * Q**2)
+    end subroutine
+
     subroutine NMpotential(t, posxyz, pot, derxyz)
+        use  xyzqct_settings, only: nfreqs, freqs, CXQ, Xeq
+        use xyzqct_physics, only: matrix_rotation, rotate_to_eckart
+        implicit none
+        integer :: ifreq, i, j
+        real(dp), intent(in) :: t, posxyz(ndim/2)
+        real(dp), intent(out) :: pot, derxyz(ndim/2)
+        real(dp) :: Q(nfreqs), aux, q_(ndim/2), mass_(ndim/2), Teck(3,3), rot_pos(ndim/2)
+        real(dp) :: pos_(ndim/2), pot1, pot2
+        real(dp), parameter :: delta = 1e-6
+
+        Q = 0._dp
+        q_ = 0._dp
+        pot = 0._dp
+        derxyz = 0._dp
+
+        call NM_pot(posxyz, pot)
+
+        do i=1,ndim/2
+            pos_ = posxyz
+            pos_(i) = posxyz(i) + delta
+            call NM_pot(pos_, pot1)
+            pos_(i) = posxyz(i) - delta
+            call NM_pot(pos_, pot2)
+            derxyz(i) = (pot1 - pot2) / (2 * delta)
+        end do
+
+    end subroutine NMpotential
+
+    subroutine NMpotential_ana(t, posxyz, pot, derxyz)
         use  xyzqct_settings, only: nfreqs, freqs, CXQ, Xeq
         implicit none
         integer :: ifreq, i, j
@@ -109,7 +164,7 @@ module xyzqct_hamiltonian
             derxyz(i) = derxyz(i) * mass_(i)
         end do
         pot = 5e-1 * sum(freqs**2 * Q**2)
-    end subroutine NMpotential
+    end subroutine NMpotential_ana
 
     subroutine adiabatic_switching(t, posxyz, pot, derxyz)
         use xyzqct_settings, only: Ts
