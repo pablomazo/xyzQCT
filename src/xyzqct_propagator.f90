@@ -77,12 +77,16 @@ module xyzqct_propagator
             call system_clock(time_init, time_rate)
             call s%integrate_to_event(timein, XP, timeout, idid=idid, integration_mode=2, gval=gval)
             call system_clock(time_end)
-            if (idid .eq. -1) then
+            if (idid < 0) then
                 write(sal_unit,"(/A)") "*******************************************"
-                write(sal_unit,"(A)") "ERROR: Maximum number of integration steps reached."
-                write(sal_unit,"(A)") "Maximum number of iterations computed as int(max_step_factor * tottime)"
-                write(sal_unit,"(A)") "Increase either parameter in the input to increase the maximum number of steps"
-                write(sal_unit,"(A/)") "*******************************************"
+                write(sal_unit,"(A)") "ERROR during DDEABM propagation. Routine exited with idid:"
+                write(sal_unit,*) idid
+                if (idid .eq. -1) then
+                    write(sal_unit,"(/A)") "ERROR: Maximum number of integration steps reached."
+                    write(sal_unit,"(A)") "Maximum number of iterations computed as int(max_step_factor * tottime)"
+                    write(sal_unit,"(A)") "Increase either parameter in the input to increase the maximum number of steps"
+                end if
+            write(sal_unit,"(A/)") "*******************************************"
             end if
             elapsed = real(time_end - time_init) / real(time_rate)
             final_t = timein
