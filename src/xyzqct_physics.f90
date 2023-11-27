@@ -159,4 +159,66 @@ module xyzqct_physics
         call matrix_rotation(3, nat, XP(:3*nat), EulerR)
         call matrix_rotation(3, nat, XP(3*nat+1:), EulerR)
     end subroutine
+
+    subroutine rotate_to_eckart(nat, x, xeq, m, Tbest)
+        use xyzqct_lapack, only: eigh
+        ! A. Y. Dymarsky and K. N. Kudin, J. Chem. Phys. 122, 124103 (2005)
+        implicit none
+        integer, intent(in) :: nat
+        real(dp), intent(in) :: x(3*nat), xeq(3*nat), m(nat)
+        real(dp), intent(out) :: Tbest(3,3)
+        real(dp) :: error, error_best, A(3,3), A1(3,3), A2(3,3), v1(3), v2(3), w1(3,3), xrot(3*nat), T(3,3)
+        integer :: iat, icoor, jcoor, iv, ii
+        logical :: invert(8,3)
+
+        invert(1,:) = [.False., .False., .False.]
+        invert(2,:) = [.True., .False., .False.]
+        invert(3,:) = [.False., .True., .False.]
+        invert(4,:) = [.False., .False., .True.]
+        invert(5,:) = [.True., .True., .False.]
+        invert(6,:) = [.True., .False., .True.]
+        invert(7,:) = [.False., .True., .True.]
+        invert(8,:) = [.True., .True., .True.]
+
+        Tbest = 0._dp
+        error_best = 1e10_dp
+
+        A = 0._dp
+        do iat=1,nat
+            do icoor=1,3
+                do jcoor=1,3
+                    A(icoor, jcoor) = A(icoor, jcoor) + &
+                        m(iat) * x(3*(iat-1)+icoor) * xeq(3*(iat-1)+jcoor)
+                end do
+            end do
+        end do
+        A1 = matmul(A, transpose(A))
+        A2 = matmul(transpose(A), A)
+
+        call eigh(3, A1, v1)
+        call eigh(3, A2, v2)
+        call cross_prod(A1(:,1), A1(:,2), A1(:,3))
+        call cross_prod(A2(:,1), A2(:,2), A2(:,3))
+
+        do iv=1,8
+            T = 0._dp
+            error = 0._dp
+            w1 = A1
+            xrot = x
+            do ii=1,3
+                if (invert(iv,ii)) w1(:,ii) = -w1(:,ii)
+            end do
+            T = matmul(A2, transpose(w1))
+
+            call matrix_rotation(3, nat, xrot, T)
+            do ii=1,nat
+                error = error + &
+                    sqrt(sum((xrot(3*(ii-1)+1:3*ii) - xeq(3*(ii-1)+1:3*ii))**2))
+            end do
+            if (error < error_best) then
+                error_best = error
+                Tbest = T
+            end if
+        end do
+    end subroutine
 end module xyzqct_physics
