@@ -116,7 +116,7 @@ module xyzqct_propagator
             integer :: numsteps, istep, iat
             integer :: time_init, time_rate, time_end
 
-            numsteps = int((tf - ti) / deltat) + 1
+            numsteps = int((tf - ti) / deltat)
             do iat=1,nat
                 mass_(3*(iat-1)+1:3*iat) = mass(iat)
             end do
@@ -125,7 +125,7 @@ module xyzqct_propagator
             time = ti
             call derivs(s, time, XP, XPder)
             do istep=1, numsteps
-                time = (istep - 1) * deltat
+                time = istep * deltat + ti
                 XP(ndim/2+1:) = XP(ndim/2+1:) + deltat2 * XPder(ndim/2+1:)
                 XP(:ndim/2) = XP(:ndim/2) + deltat * XP(ndim/2+1:) / mass_
                 call derivs(s, time, XP, XPder)
