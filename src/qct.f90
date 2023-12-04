@@ -18,7 +18,7 @@ program QCT
                 potener, print_time, tprev, Eini, Eend, E_s,&
                 init_cond_print, final_t, &
                 QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed, &
-                inertia(3), inertia_vec(3,3), omega(3)
+                inertia(3), inertia_vec(3,3), omega(3), dum
     logical :: open_unit, prop
     integer, allocatable :: seed(:)
 
@@ -71,6 +71,7 @@ program QCT
         seed = itraj
         call RANDOM_SEED(PUT=seed) ! To guarantee that trajectories are reproducible.
                                    ! There are probably better ways...
+        call RANDOM_NUMBER(dum) ! Improves the first few random numbers
         flush(sal_unit)
         write(sal_unit,"(/A)") '---------------'
         write(sal_unit,*) "Starting traj =", itraj
