@@ -1,9 +1,9 @@
 module xyzqct_initial_conditions
-    use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi, kb, autoJ
-    use xyzqct_settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin
+    use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi, kb, autoJ, autoA
+    use xyzqct_settings, only : ndim, Qnum, amp, nfreqs, freqs, CXQ, massA, Xeq, atnameA, nA, Qmax, temperature, rfin, nB
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
-    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans, A_capture, n_capture
+    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans, A_capture, n_capture, inertiaA(3), inertiaB(3)
 
     private :: init_cond_mode, bparam
 
@@ -18,7 +18,6 @@ module xyzqct_initial_conditions
         bmin, &
         A_capture, &
         n_capture
-
     ! init_cond_mode:
     ! 0 => Read from file
     ! 1 => NM initial condition
@@ -26,9 +25,16 @@ module xyzqct_initial_conditions
 
     contains
         subroutine set_init_cond(mode)
-            use xyzqct_settings, only: initcond_fileA, initcond_fileB
+            use xyzqct_settings, only: initcond_fileA, initcond_fileB, XeqA, XeqB, massA, massB
+            use xyzqct_physics, only: get_inertia_moments
             implicit none
-            integer :: mode
+            integer :: mode, ios
+            real(dp) :: inertia_vec(3,3)
+    namelist /EqA/ &
+        XeqA
+    namelist /EqB/ &
+        XeqB
+
             init_cond_mode = mode
             select case(mode)
                 case(0)
@@ -84,6 +90,18 @@ module xyzqct_initial_conditions
                     read(cond_unitB,*) max_condB
                     rewind(cond_unitB)
                     write(sal_unit,*) "Total number of initial conditions (B) =", max_condB
+                    allocate(XeqA(3*nA), XeqB(3*nB))
+                    XeqA = 0._dp
+                    XeqB = 0._dp
+                    rewind(10)
+                    read(10, nml=EqA, iostat=ios)
+                    rewind(10)
+                    read(10, nml=EqB, iostat=ios)
+                    write(sal_unit, nml=EqB)
+                    XeqA = XeqA / autoA
+                    XeqB = XeqB / autoA
+                    call get_inertia_moments(nA, XeqA, massA, inertiaA, inertia_vec)
+                    call get_inertia_moments(nB, XeqB, massB, inertiaB, inertia_vec)
                 case default
                     write(sal_unit,"(/A/)") "Unknown initial condition mode."
                     stop
@@ -316,7 +334,7 @@ module xyzqct_initial_conditions
               call get_angular_velocity(inertia, AMOM, omega)
               call add_angular_velocity(nA, XPA, massA, omega, -1._dp)
               if (Trot .gt. 0._dp) then
-                  call sample_J(inertia, Trot, J, Erot)
+                  call sample_J(inertiaA, Trot, J, Erot)
                   write(sal_unit,*) "Setting Jx, Jy, Jz, J (A):", J
                   write(sal_unit,*) "Rotational energy /au (A):", Erot
                   call get_angular_velocity(inertia, J(1:3), omega)
@@ -342,7 +360,7 @@ module xyzqct_initial_conditions
               call get_angular_velocity(inertia, AMOM, omega)
               call add_angular_velocity(nB, XPB, massB, omega, -1._dp)
               if (Trot .gt. 0._dp) then
-                  call sample_J(inertia, Trot, J, Erot)
+                  call sample_J(inertiaB, Trot, J, Erot)
                   write(sal_unit,*) "Setting Jx, Jy, Jz, J (B):", J
                   write(sal_unit,*) "Rotational energy /au (B):", Erot
                   call get_angular_velocity(inertia, J(1:3), omega)

@@ -5,7 +5,7 @@ module xyzqct_settings
       integer :: ios
       integer, allocatable :: Qnum(:), Qmax(:)
       real(dp), allocatable :: XP(:), XPini(:), massA(:), Xeq(:), CXQ(:,:), freqs(:), amp(:), &
-          massB(:), mass(:)
+          massB(:), mass(:), XeqA(:), XeqB(:)
       real(dp) :: Ts, temperature, rfin
       character(len=2), allocatable :: atnameA(:), atnameB(:), atname(:)
       character(len=80) :: initcond_fileA, initcond_fileB
