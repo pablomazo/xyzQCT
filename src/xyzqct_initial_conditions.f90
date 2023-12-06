@@ -92,7 +92,7 @@ module xyzqct_initial_conditions
                         end if
                         write(sal_unit, "('Rotational analysis of system A:')")
                         call get_inertia_moments(sysA % nat, sysA % Xeq, sysA % mass, inertiaA, inertia_vec)
-                        write(sal_unit, *) "Inertia moments:", inertiaA
+                        write(sal_unit, *) "B (cm-1):", 1._dp / (4 * pi * inertiaA * autoA * 1e-8_dp * 137)
                     end if
                     if (sysB % nat > 1 .and. Trot > 0._dp) then
                         if (all (sysB % Xeq == 0._dp)) then
@@ -101,7 +101,7 @@ module xyzqct_initial_conditions
                         end if
                         write(sal_unit, "('Rotational analysis of system B:')")
                         call get_inertia_moments(sysB % nat, sysB % Xeq, sysB % mass, inertiaB, inertia_vec)
-                        write(sal_unit, *) "Inertia moments:", inertiaB
+                        write(sal_unit, *) "B (cm-1):", 1._dp / (4 * pi * inertiaB * autoA * 1e-8_dp * 137)
                     end if
                 case default
                     write(sal_unit,"(/A/)") "Unknown initial condition mode."
