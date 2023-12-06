@@ -22,6 +22,9 @@ module xyzqct_hamiltonian
     subroutine get_potential(mode)
         integer, intent(in) :: mode
         integer :: ios
+        write(sal_unit, "(/A)") "************************************"
+        write(sal_unit, *) "SETTING POTENTIAL..."
+        call setpotxyz
         select case(mode)
             case(0)
                 write(sal_unit,"(/A/)") "Using user defined potential."
@@ -47,6 +50,7 @@ module xyzqct_hamiltonian
                 write(sal_unit,"(/A/)") "Unknown potential mode."
                 stop
         end select
+        write(sal_unit, "(/A)") "************************************"
     end subroutine get_potential
 
     subroutine derivs(me, t, XP, XPder)

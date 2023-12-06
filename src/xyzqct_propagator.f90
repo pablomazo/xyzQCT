@@ -15,6 +15,8 @@ module xyzqct_propagator
             implicit none
             integer, intent(in) :: ipropagator
             iprop = ipropagator
+            write(sal_unit, "(/A)") "************************************"
+            write(sal_unit, *) "SETTING PROPAGATOR..."
             select case(iprop)
                 case(0)
                     write(sal_unit,"(/A/)") "Using DDEABM propagator."
@@ -26,6 +28,7 @@ module xyzqct_propagator
                     write(sal_unit,"(/A/)") "Unknown propagator."
                     stop
             end select
+            write(sal_unit, "(/A/)") "************************************"
         end subroutine
 
         subroutine propagate(XP, ti, tf, ptime, ptime_as, r, final_t, elapsed)

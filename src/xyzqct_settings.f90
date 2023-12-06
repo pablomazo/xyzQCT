@@ -24,7 +24,6 @@ module xyzqct_settings
           ndim = 2 * 3 * nat
           allocate(XP(ndim), XPini(ndim), mass(nat), atname(nat))
 
-          call setpotxyz
           call setup_system('A', nA, sysA)
           call setup_system('B', nB, sysB)
           mass(:nA) = sysA % mass
