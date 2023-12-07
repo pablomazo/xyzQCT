@@ -52,6 +52,7 @@ write(sal_unit,*) "|__|/ \|__\|___|/                                       \|__|
     if (modul .ne. 0) nlines = nlines + 1
 
     nprint = max_in_line
+    write(sal_unit,"('ZPE:', F15.2, ' cm-1')") 0.5_dp * sum(freq) * autocm_1
     do i=1, nlines
         ! This only affects the last line.
         if (i==nlines .and. modul .ne. 0) nprint = modul
