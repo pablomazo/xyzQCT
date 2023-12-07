@@ -1,5 +1,5 @@
 module xyzqct_utils
-    use xyzqct_constants, only: sal_unit
+    use xyzqct_constants, only: sal_unit, dp
     implicit none
 
     contains
@@ -34,5 +34,51 @@ write(sal_unit,*) "  /     \/   \/  /  /     /  /_/_\|____________|\ \  \\\  \ \
 write(sal_unit,*) " /  /\   \ __/  / /      |\________\             \ \_____  \ \_______\  \ \__\"
 write(sal_unit,*) "/__/ /\ __\\___/ /        \|_______|              \|___| \__\|_______|   \|__|"
 write(sal_unit,*) "|__|/ \|__\|___|/                                       \|__|                 "
+    end subroutine
+
+    subroutine write_freq_NM(nat, nfreq, freq, NM)
+        use xyzqct_constants, only: autocm_1
+    implicit none
+    integer, intent(in) :: nfreq, nat
+    real(dp), dimension(nfreq), intent(in) :: freq
+    real(dp), dimension(3*nat, nfreq), intent(in) :: NM
+
+    integer, parameter :: max_in_line = 5
+    integer :: i, j, k, index, nlines, nprint, modul
+    character(len=100) :: FORMAT1, COOR_NAME
+
+    nlines = nfreq / max_in_line
+    modul = mod(nfreq, max_in_line)
+    if (modul .ne. 0) nlines = nlines + 1
+
+    nprint = max_in_line
+    do i=1, nlines
+        ! This only affects the last line.
+        if (i==nlines .and. modul .ne. 0) nprint = modul
+
+        ! Write line with frequencies:
+        write(FORMAT1,'(A5,I1,A10)') "(A17,", nprint, "(F15.2,X))"
+        write(sal_unit,FORMAT1) 'Wavenumber/cm-1:',&
+            freq(max_in_line*(i-1)+1:max_in_line*(i-1)+nprint) * autocm_1
+
+        ! Write normal mode coordinates:
+        write(FORMAT1,'(A5,I1,A10)') "(A17,", nprint, "(F15.9,X))"
+        do j=1,nat
+           do k=1,3
+              index = 3 * (j-1) + k
+              if (k==3) then
+                 write(COOR_NAME,'(A2,I3)') 'QZ', j
+              elseif(k==2) then
+                 write(COOR_NAME,'(A2,I3)') 'QY', j
+              else
+                 write(COOR_NAME,'(A2,I3)') 'QX', j
+              end if
+
+              write(sal_unit,FORMAT1) &
+                  trim(COOR_NAME), NM(index, max_in_line*(i-1)+1:max_in_line*(i-1)+nprint)
+          enddo
+        enddo
+        write(sal_unit,*)
+    enddo
     end subroutine
 end module

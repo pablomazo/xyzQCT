@@ -40,14 +40,10 @@ module xyzqct_initial_conditions
                     write(sal_unit,*) "Total number of initial conditions =", max_condA
                 case(1)
                     write(sal_unit, "(/A)") "Using NM initial conditions"
-                    open(11, file=trim(sysA % initcond_file), status="old")
-                    call read_Data4NM(11, sysA)
-                    close(11)
+                    call setup_NM(sysA)
                 case(2)
                     write(sal_unit, "(/A)") "Using NM initial conditions (sampled at temperature T)"
-                    open(11, file=sysA % initcond_file, status="old")
-                    call read_Data4NM(11, sysA)
-                    close(11)
+                    call setup_NM(sysA)
                     call compute_Qmax(temperature, sysA)
                 case(3)
                     write(sal_unit, "(/A)") "Using initial conditions for A+B collision"
@@ -244,10 +240,7 @@ module xyzqct_initial_conditions
           implicit none
           integer, intent(in) :: read_unit
           type(System), intent(inout) :: sys
-          integer :: ix, ios
-          integer, allocatable :: Qnum(:)
-          namelist /Qvib/ &
-              Qnum
+          integer :: ix
 
           !read(read_unit, *)
           !read(read_unit, *)
@@ -261,23 +254,12 @@ module xyzqct_initial_conditions
           end if
           read(read_unit, *) sys % nfreqs
           allocate(sys % freqs(sys % nfreqs), &
-                   sys % CXQ(3*sys % nat, sys % nfreqs), &
-                   sys % Qnum(sys % nfreqs), &
-                   sys % amp(sys % nfreqs), &
-                   sys % Qmax(sys % nfreqs),&
-                   Qnum(sys % nfreqs))
+                   sys % CXQ(3*sys % nat, sys % nfreqs))
           read(read_unit, *) sys % freqs
           do ix=1, 3*sys % nat
               read(read_unit,*) sys % CXQ(ix,:)
           end do
           sys % freqs = sys % freqs / autocm_1
-          Qnum = 0 ! Vibrational quantum numbers
-          rewind(10)
-          read(10, nml=Qvib, iostat=ios)
-          if (ios .ne. 0) write(sal_unit, *) "Namelist Qvib not found"
-          write(sal_unit, nml=Qvib)
-          sys % Qnum = Qnum
-          deallocate(Qnum)
       end subroutine read_Data4NM
 
       subroutine compute_Qmax(T, sys)
@@ -517,5 +499,41 @@ module xyzqct_initial_conditions
               J(2) = sqrt(J(4)**2 - J(3)**2) * cos(2._dp * pi * r)
               Erot = (J(1)**2 / inertia(1) + J(2)**2 / inertia(2) + Erot) / 2._dp
           end if
+      end subroutine
+
+      subroutine setup_NM(sys)
+          use xyzqct_physics, only: NM_analysis
+          use xyzqct_utils, only: write_freq_NM
+          implicit none
+          type(system), intent(inout) :: sys
+          integer :: nfreqs, ios
+          real(dp), allocatable :: freqs(:), CXQ(:,:), Qnum(:)
+          namelist /Qvib/ Qnum
+
+          if (sys % initcond_file == "") then
+              write(sal_unit,*) "Perfoming vibrational analysis of system"
+              allocate(freqs(3 * sys % nat), CXQ(3 * sys % nat, 3 * sys % nat))
+              call NM_analysis(sys % nat, sys % Xeq, sys % mass, nfreqs, freqs, CXQ)
+              sys % nfreqs = nfreqs
+              allocate(sys%freqs(nfreqs), sys%CXQ(3*sys%nat, nfreqs))
+              sys%freqs = freqs(3*sys%nat-nfreqs+1:)
+              sys%CXQ = CXQ(:,3*sys%nat-nfreqs+1:)
+              deallocate(freqs, CXQ)
+              call write_freq_NM(sys % nat, sys % nfreqs, sys % freqs, sys % CXQ)
+          else
+              open(11, file=trim(sys % initcond_file), status="old")
+              call read_Data4NM(11, sys)
+              close(11)
+          end if
+          allocate(sys % Qnum(sys % nfreqs), &
+                   sys % amp(sys % nfreqs), &
+                   sys % Qmax(sys % nfreqs),&
+                   Qnum(sys % nfreqs))
+          rewind(10)
+          read(10, nml=Qvib, iostat=ios)
+          if (ios .ne. 0) write(sal_unit, *) "Namelist Qvib not found"
+          write(sal_unit, nml=Qvib)
+          sys % Qnum = Qnum
+          deallocate(Qnum)
       end subroutine
 end module xyzqct_initial_conditions

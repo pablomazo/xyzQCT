@@ -221,4 +221,185 @@ module xyzqct_physics
             end if
         end do
     end subroutine
+
+    subroutine NM_analysis(n, x, mass, nfreqs, freqs, CXQ)
+        use xyzqct_lapack, only: eigh
+        implicit none
+        integer, intent(in) :: n
+        real(dp), intent(in) :: x(3*n), mass(n)
+        real(dp), intent(out) :: freqs(3*n), CXQ(3*n, 3*n)
+        integer, intent(out) :: nfreqs
+        real(dp) :: sm(n)
+        integer :: i, j
+
+        freqs = 0._dp
+        CXQ = 0._dp
+        nfreqs = 0
+        sm = sqrt(mass)
+
+        call eval_hessian(3*n, x, CXQ)
+        call filter_hessian(n, mass, x, CXQ)
+        do i=1,3*n
+            do j=1,3*n
+                CXQ(i,j) = CXQ(i,j) / (sm((i-1)/3+1) * sm((j-1)/3+1))
+            end do
+        end do
+        flush(6)
+        call eigh(3*n, CXQ, freqs)
+
+        do i=1,3*n
+           if (freqs(i) > 1e-10_dp) nfreqs = nfreqs + 1
+        end do
+        freqs = sqrt(abs(freqs))
+    end subroutine
+
+    subroutine eval_hessian(n, x, hessian)
+        integer, intent(in) :: n
+        real(dp), intent(in) :: x(n)
+        real(dp), intent(out) :: hessian(n,n)
+
+        integer :: i, j
+        real(dp) :: pot, &
+                    x1(n), &
+                    grad1(n), grad2(n), &
+                    deltag(n,n)
+
+        real(dp), parameter :: delta = 1e-4_dp, fourdelta = 4 * delta
+
+        ! delta calculation taken from:
+        !https://v8doc.sas.com/sashtml/ormp/chap5/sect28.htm
+        ! delta = (1e-r)**(1/3) with r the precision.
+
+        hessian = 0._dp
+        deltag = 0._dp
+        do i=1, n
+           x1 = x
+           x1(i) = x(i) + delta
+           call potxyz(x1, pot, grad1)
+           x1(i) = x(i) - delta
+           call potxyz(x1, pot, grad2)
+           deltag(i,:) = grad1 - grad2
+           do j=1,i
+              hessian(i,j) = (deltag(j,i) + deltag(i,j)) / fourdelta
+              hessian(j,i) = hessian(i,j)
+           end do
+        end do
+    end subroutine
+
+    subroutine filter_hessian(nat, mass, xin, h)
+        ! Tries to project translation and rotations out of the hessian.
+        integer, intent(in) :: nat
+        real(dp), intent(in) :: xin(3*nat), mass(nat)
+        real(dp), intent(inout) :: h(3*nat, 3*nat)
+
+        integer :: iat, i, j
+        real(dp) :: x(3*nat), com(3), Imom(3), Iaxis(3,3),&
+                    tmp(3*nat,3*nat), P(3*nat,3*nat), dum(3), &
+                    sm(nat)
+
+        sm = sqrt(mass)
+        ! Evaluate COM of the system.
+        call get_COM(3*nat, xin, 1, nat, mass, com, dum)
+
+        ! Set origin in COM
+        do iat=1,nat
+           x(3*(iat-1)+1:3*iat) = xin(3*(iat-1)+1:3*iat) - com
+        end do
+
+        ! Evaluate inertia axis.
+        call get_inertia_moments(nat, x, mass, Imom, Iaxis)
+
+        ! Generate projector out of translations and rotations.
+        call trans_rot_projector(nat, x, mass, Iaxis, P)
+
+        ! Mass scale hessian:
+        do i=1,3*nat
+           do j =i,3*nat
+              h(i,j) = h(i,j) / (sm((i-1)/3+1) * sm((j-1)/3+1))
+              h(j,i) = h(i,j)
+           end do
+        end do
+
+        ! Project translation and rotation out of hessian
+        tmp = matmul(transpose(P), h)
+        h = matmul(tmp, P)
+        
+        ! Mass scale hessian back:
+        do i=1,3*nat
+           do j =i,3*nat
+              h(i,j) = h(i,j) * (sm((i-1)/3+1) * sm((j-1)/3+1))
+              h(j,i) = h(i,j)
+           end do
+        end do
+    end subroutine
+
+    subroutine trans_rot_projector(nat, x, mass, Iaxis, proj)
+        ! Generates a basis of internal coordinates.
+        ! Input:
+        !   - x: Point in which the hessian was calculated.
+        !   - Iaxis: Principal axis of inertia.
+
+        ! Output:
+        !  - proj: Projector to remove rotations and translations.
+        integer, intent(in) :: nat
+        real(dp), intent(in) :: x(3*nat), Iaxis(3,3), mass(nat)
+        real(dp), intent(out) :: proj(3*nat, 3*nat)
+
+        integer :: iat, icoor, imax, i, j
+        real(dp) :: norm, P(nat,3), xyz(nat,3), D(6,3*nat), &
+            tmp(3*nat,3*nat), sm(nat)
+        real(dp), allocatable :: redD(:,:)
+
+        real(dp), parameter :: thres = 1e-5_dp
+
+        D = 0e0_dp
+        xyz = 0e0_dp
+        sm = sqrt(mass)
+
+        do iat=1,nat
+           xyz(iat,:) = x(3*(iat-1)+1:3*iat)
+        end do
+
+        P = matmul(xyz, Iaxis)
+
+        do iat=1,nat
+           ! Translational modes:
+           D(1,3*(iat-1)+1) = sm(iat)
+           D(2,3*(iat-1)+2) = sm(iat)
+           D(3,3*(iat-1)+3) = sm(iat)
+           do icoor=1,3
+              ! Rotational modes:
+              D(4, 3*(iat-1)+icoor) = (P(iat,2) * Iaxis(icoor,3) - P(iat,3) * Iaxis(icoor,2)) * sm(iat)
+              D(5, 3*(iat-1)+icoor) = (P(iat,3) * Iaxis(icoor,1) - P(iat,1) * Iaxis(icoor,3)) * sm(iat)
+              D(6, 3*(iat-1)+icoor) = (P(iat,1) * Iaxis(icoor,2) - P(iat,2) * Iaxis(icoor,1)) * sm(iat)
+           end do
+        end do
+
+        ! Normalize translational and rotational modes:
+        imax = 0
+        do icoor=1,6
+           norm = sqrt(sum(D(icoor,:)**2))
+           ! If norm of mode is too small discard it.
+           if (norm > thres) then
+               imax = imax + 1
+               D(imax,:) = D(icoor,:) / norm
+           end if
+        end do
+
+        ! Allocate reduced D matrix
+        allocate(redD(imax, 3*nat))
+        do i=1,imax
+           redD(i,:) = D(i,:)
+        end do
+
+        ! Generate projector to remove rotation and translation.
+        tmp = matmul(transpose(redD), redD)
+        proj = 0e0_dp
+        do i=1,3*nat
+           proj(i,i) = 1e0_dp
+           do j=1,3*nat
+              proj(i,j) = proj(i,j) - tmp(i,j)
+           end do
+        end do
+    end subroutine
 end module xyzqct_physics
