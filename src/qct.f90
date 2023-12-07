@@ -58,8 +58,8 @@ program QCT
     init_cond_print=init_cond_print/autofs
 
     call initial_settings()
-    call set_init_cond(initcond_mode) ! set initial conditions.
     call get_potential(potential_mode)
+    call set_init_cond(initcond_mode) ! set initial conditions.
     call set_propagator(propagator_mode)
     close(10)
 
