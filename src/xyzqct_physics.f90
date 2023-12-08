@@ -293,7 +293,7 @@ module xyzqct_physics
         real(dp), intent(inout) :: h(3*nat, 3*nat)
 
         integer :: iat, i, j
-        real(dp) :: x(3*nat), com(3), Imom(3), Iaxis(3,3),&
+        real(dp) :: x(3*nat), com(3), Iaxis(3,3),&
                     tmp(3*nat,3*nat), P(3*nat,3*nat), dum(3), &
                     sm(nat)
 
@@ -307,7 +307,7 @@ module xyzqct_physics
         end do
 
         ! Evaluate inertia axis.
-        call get_inertia_moments(nat, x, mass, Imom, Iaxis)
+        call get_inertia_moments(nat, x, mass, dum, Iaxis)
 
         ! Generate projector out of translations and rotations.
         call trans_rot_projector(nat, x, mass, Iaxis, P)
