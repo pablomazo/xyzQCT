@@ -498,13 +498,14 @@ module xyzqct_initial_conditions
       end subroutine
 
       subroutine setup_NM(sys)
-          use xyzqct_physics, only: NM_analysis
-          use xyzqct_utils, only: write_freq_NM
+          use xyzqct_physics, only: NM_analysis, get_COM, get_inertia_moments, matrix_rotation
+          use xyzqct_utils, only: write_freq_NM, write_xyz
           implicit none
           type(system), intent(inout) :: sys
-          integer :: nfreqs, ios
+          integer :: nfreqs, ios, iat
           real(dp), allocatable :: freqs(:), CXQ(:,:)
           integer, allocatable :: Qnum(:)
+          real(dp) :: com(3), dum(3), Iaxis(3,3)
           namelist /Qvib/ Qnum
 
           if (all(sys %  Xeq == 0._dp)) then
@@ -512,7 +513,15 @@ module xyzqct_initial_conditions
               stop
           end if
           if (sys % initcond_file == "") then
-              write(sal_unit,*) "Perfoming vibrational analysis of system"
+              write(sal_unit,"(/A)") "Perfoming vibrational analysis of system:"
+              write(sal_unit,*) "Moving system to COM and orient according to inertia moments"
+              call get_COM(3*sys % nat, sys % Xeq, 1, sys % nat, sys % mass, com, dum)
+              do iat=1,sys % nat
+                  sys % Xeq(3*(iat-1)+1:3*iat) = sys % Xeq(3*(iat-1)+1:3*iat) - com
+              end do
+              call get_inertia_moments(sys % nat, sys % Xeq, sys % mass, dum, Iaxis)
+              call matrix_rotation(3, sys % nat, sys % Xeq, Iaxis)
+              call write_xyz(sal_unit, sys % nat, sys % Xeq, sys % atname, "Oriented system")
               allocate(freqs(3 * sys % nat), CXQ(3 * sys % nat, 3 * sys % nat))
               call NM_analysis(sys % nat, sys % Xeq, sys % mass, nfreqs, freqs, CXQ)
               sys % nfreqs = nfreqs
