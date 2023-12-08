@@ -248,10 +248,6 @@ module xyzqct_initial_conditions
           !    read(read_unit, *) atnameA(iat), Xeq(3*(iat-1)+1:3*iat)
           !end do
           !Xeq = Xeq / autoA
-          if (all(sys %  Xeq == 0._dp)) then
-              write(sal_unit,*) "Equilibrium geometry of system not found. Please provide it in the system namelist"
-              stop
-          end if
           read(read_unit, *) sys % nfreqs
           allocate(sys % freqs(sys % nfreqs), &
                    sys % CXQ(3*sys % nat, sys % nfreqs))
@@ -511,6 +507,10 @@ module xyzqct_initial_conditions
           integer, allocatable :: Qnum(:)
           namelist /Qvib/ Qnum
 
+          if (all(sys %  Xeq == 0._dp)) then
+              write(sal_unit,*) "Equilibrium geometry of system not found. Please provide it in the system namelist"
+              stop
+          end if
           if (sys % initcond_file == "") then
               write(sal_unit,*) "Perfoming vibrational analysis of system"
               allocate(freqs(3 * sys % nat), CXQ(3 * sys % nat, 3 * sys % nat))
