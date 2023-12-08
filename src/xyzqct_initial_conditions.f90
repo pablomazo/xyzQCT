@@ -204,7 +204,7 @@ module xyzqct_initial_conditions
             call get_angular_velocity(inertia, AMOM, omega)
             call add_angular_velocity(sysA % nat, XP, sysA % mass, omega, -1._dp)
             E = 1e10_dp
-            do while (abs(E - E0) / E0 > 1e-3)
+            do while (abs(E - E0) / E0 > 1e-4)
                 XP(3*sysA % nat+1:) = XP(3*sysA % nat+1:) * E0 / E
                 call total_ener(0._dp, XP, kener, potener)
                 E = (kener + potener)

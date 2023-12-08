@@ -117,7 +117,7 @@ program QCT
                 call total_ener(final_t, XP, kener, potener)
                 Eend = (kener + potener) * autocm_1
                 write(sal_unit,*) "Scaling momenta to match energy after switch..."
-                do while (abs(E_s - Eend) / E_s > 1e-3)
+                do while (abs(E_s - Eend) / E_s > 1e-4)
                     XP(3*nat+1:) = XP(3*nat+1:) * (E_s / Eend)
                     call total_ener(final_t, XP, kener, potener)
                     Eend = (kener + potener) * autocm_1
