@@ -507,7 +507,8 @@ module xyzqct_initial_conditions
           implicit none
           type(system), intent(inout) :: sys
           integer :: nfreqs, ios
-          real(dp), allocatable :: freqs(:), CXQ(:,:), Qnum(:)
+          real(dp), allocatable :: freqs(:), CXQ(:,:)
+          integer, allocatable :: Qnum(:)
           namelist /Qvib/ Qnum
 
           if (sys % initcond_file == "") then
@@ -530,6 +531,7 @@ module xyzqct_initial_conditions
                    sys % Qmax(sys % nfreqs),&
                    Qnum(sys % nfreqs))
           rewind(10)
+          Qnum = 0
           read(10, nml=Qvib, iostat=ios)
           if (ios .ne. 0) write(sal_unit, *) "Namelist Qvib not found"
           write(sal_unit, nml=Qvib)
