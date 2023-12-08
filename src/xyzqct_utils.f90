@@ -82,4 +82,20 @@ write(sal_unit,*) "|__|/ \|__\|___|/                                       \|__|
         write(sal_unit,*)
     enddo
     end subroutine
+
+    subroutine write_xyz(u, nat, x, atname, message)
+        use xyzqct_constants, only: dp, autoA
+        implicit none
+        integer, intent(in) :: nat, u
+        real(dp), intent(in) :: x(3*nat)
+        character(len=2), intent(in) :: atname(nat)
+        character(len=*), intent(in) :: message
+        integer :: i
+
+        write(u,*) nat
+        write(u,*) message
+        do i=1,nat
+            write(u,'(A2,X,3(F17.12,X))') atname(i), x(3*(i-1)+1:3*i) * autoA
+        end do
+    end subroutine
 end module

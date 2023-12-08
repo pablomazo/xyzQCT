@@ -146,20 +146,19 @@ module xyzqct_propagator
             use xyzqct_constants, only: xyz_unit, autoA, as_unit
             use xyzqct_settings, only: nat, atname, Ts
             use xyzqct_hamiltonian, only: total_ener
+            use xyzqct_utils, only: write_xyz
             implicit none
             class(ddeabm_class), intent(inout) :: me
             integer :: iat
             real(dp), intent(in) :: t, XP(:)
             real(dp) :: kener, potener
+            character(len=100) :: message
 
             if (t - tprev > print_time .and. print_time > 0._dp) then
                 call total_ener(t, XP, kener, potener)
                 tprev = t
-                write(xyz_unit,*) nat
-                write(xyz_unit,*) t * autofs, kener, potener, " = t/fs, kinetic (au), pot (au)"
-                do iat=1,nat
-                    write(xyz_unit,*) atname(iat), XP(3*(iat-1)+1:3*iat) * autoA
-                end do
+                write(message, "(F8.1,X,G17.10e2,X,G17.10e2,X,'= t/fs, kinetic (au), pot (au)')") t * autofs, kener, potener
+                call write_xyz(xyz_unit, nat, XP(:3*nat), atname, trim(message))
             end if
 
             if (Ts > 0 .and. t > Ts .and. t - tprev_as > print_time_as) then
