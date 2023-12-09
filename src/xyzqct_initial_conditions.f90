@@ -2,6 +2,7 @@ module xyzqct_initial_conditions
     use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi, kb, autoJ, autoA
     use xyzqct_settings, only : ndim, temperature, rfin, &
         sysA, sysB, System
+    use xyzqct_rand, only: ran2
     implicit none
     integer :: init_cond_mode, max_condA, max_condB
     real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans, A_capture, n_capture, inertiaA(3), inertiaB(3)
@@ -151,7 +152,7 @@ module xyzqct_initial_conditions
 
             XP(:) = 0._dp
 
-            call RANDOM_NUMBER(r)
+            call ran2(r)
             icond = floor(max_cond * r + 1)
             write(sal_unit,*) "Using icond =", icond
 
@@ -176,7 +177,7 @@ module xyzqct_initial_conditions
 
             sysA % amp = sqrt((2._dp * sysA % Qnum +1._dp) / sysA % freqs) ! Maximum NM amplitudes
 
-            call RANDOM_NUMBER(phase)
+            call ran2(phase)
             XP = 0._dp
             phase = 2._dp * pi * phase
             Q = sysA % amp * sin(phase)
@@ -337,11 +338,11 @@ module xyzqct_initial_conditions
                   call add_angular_velocity(sysA % nat, XPA, sysA % mass, omega, 1._dp)
               end if
 
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               phi = 2 * pi * r
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               theta = pi * r
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               chi = 2 * pi * r
               call rotate_euler(sysA % nat, XPA, phi, theta, chi)
               write(sal_unit,*) "Setting euler phi, theta, chi (A) = ", phi, theta, chi
@@ -363,11 +364,11 @@ module xyzqct_initial_conditions
                   call add_angular_velocity(sysB % nat, XPB, sysB % mass, omega, 1._dp)
               end if
 
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               phi = 2 * pi * r
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               theta = pi * r
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               chi = 2 * pi * r
               call rotate_euler(sysB % nat, XPB, phi, theta, chi)
               write(sal_unit,*) "Setting euler phi, theta, chi (B) = ", phi, theta, chi
@@ -383,10 +384,10 @@ module xyzqct_initial_conditions
               r = 1.0_dp
               prob = 0.0_dp
               do while (r > prob)
-                  call RANDOM_NUMBER(r)
+                  call ran2(r)
                   erel = erelmax * r
                   prob = erel / Ttrans * exp(-erel / Ttrans) * exp(1.0_dp)
-                  call RANDOM_NUMBER(r)
+                  call ran2(r)
               end do
           end if
           write(sal_unit,*) "Setting relative translational energy / au = ", erel
@@ -405,7 +406,7 @@ module xyzqct_initial_conditions
 
           !-------------------------------
           ! Move system B to rini with bparam
-          call RANDOM_NUMBER(r)
+          call ran2(r)
           bparam = bmin + (bmax - bmin) * sqrt(r)
           if (A_capture .ne. 0._dp) then
               propagate = bparam <= A_capture / erel**n_capture
@@ -415,7 +416,7 @@ module xyzqct_initial_conditions
               end if
           end if
           write(sal_unit,*) "Setting bparam / au = ", bparam
-          call RANDOM_NUMBER(r)
+          call ran2(r)
           ang = 2 * pi * r
           QCOM = 0.0_dp
           QCOM(1) = bparam * cos(ang)
@@ -468,29 +469,29 @@ module xyzqct_initial_conditions
               r = 1.0_dp
               prob = 0.0_dp
               do while (r > prob)
-                  call RANDOM_NUMBER(r)
+                  call ran2(r)
                   J(ix) = real(floor(Jmax * r), dp)
-                  call RANDOM_NUMBER(r)
+                  call ran2(r)
                   if (r > 0.5_dp) J(ix) = -J(ix)
                   prob = exp(-J(ix)**2 / (2._dp * inertia(ix) * T))
-                  call RANDOM_NUMBER(r)
+                  call ran2(r)
               end do
               Erot = J(ix)**2 / inertia(ix)
           end if
 
           if (nlin == 1 .or. ix == 1) then
               inertia_mean = sqrt(inertia(2) * inertia(3))
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               J(4) = real(floor(sqrt(J(1)**2 - 2 * inertia_mean * T * log(1._dp - r))), dp)
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               J(2) = sqrt(J(4)**2 - J(1)**2) * sin(2._dp * pi * r)
               J(3) = sqrt(J(4)**2 - J(1)**2) * cos(2._dp * pi * r)
               Erot = (J(2)**2 / inertia(2) + J(3)**2 / inertia(3) + Erot) / 2._dp
           else
               inertia_mean = sqrt(inertia(1) * inertia(2))
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               J(4) = real(floor(sqrt(J(3)**2 - 2 * inertia_mean * T * log(1._dp - r))), dp)
-              call RANDOM_NUMBER(r)
+              call ran2(r)
               J(1) = sqrt(J(4)**2 - J(3)**2) * sin(2._dp * pi * r)
               J(2) = sqrt(J(4)**2 - J(3)**2) * cos(2._dp * pi * r)
               Erot = (J(1)**2 / inertia(1) + J(2)**2 / inertia(2) + Erot) / 2._dp

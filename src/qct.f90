@@ -10,6 +10,7 @@ program QCT
     use xyzqct_propagator, only: set_propagator, propagate
     use ddeabm_module, wp => ddeabm_rk
     use xyzqct_utils, only: code_starter
+    use xyzqct_rand, only: ran_seed
     implicit none
 
     character(len=80) :: traj_file
@@ -20,7 +21,6 @@ program QCT
                 QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed, &
                 inertia(3), inertia_vec(3,3), omega(3), dum
     logical :: open_unit, prop
-    integer, allocatable :: seed(:)
 
     namelist /input/ &
         nini, &
@@ -63,15 +63,10 @@ program QCT
     call set_propagator(propagator_mode)
     close(10)
 
-    call RANDOM_SEED(size=seed_size)
-    allocate(seed(seed_size))
     do itraj=nini, ntrajs
         final_t = 0._dp
         elapsed = 0._dp
-        seed = itraj
-        call RANDOM_SEED(PUT=seed) ! To guarantee that trajectories are reproducible.
-                                   ! There are probably better ways...
-        call RANDOM_NUMBER(dum) ! Improves the first few random numbers
+        call ran_seed(sequence=itraj)
         flush(sal_unit)
         write(sal_unit,"(/A)") '---------------'
         write(sal_unit,*) "Starting traj =", itraj
