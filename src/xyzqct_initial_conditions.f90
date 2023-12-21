@@ -4,7 +4,7 @@ module xyzqct_initial_conditions
                               sysA, sysB, System
    use xyzqct_rand, only: ran2
    implicit none
-   integer :: init_cond_mode, max_condA, max_condB
+   integer :: init_cond_mode, max_condA, max_condB, JA, JB
    real(dp) :: Ecoll, Trot, rini, bmax, bmin, bparam, Ttrans, A_capture, n_capture, inertiaA(3), inertiaB(3)
 
    private :: init_cond_mode, bparam
@@ -17,7 +17,9 @@ module xyzqct_initial_conditions
       bmax, &
       bmin, &
       A_capture, &
-      n_capture
+      n_capture, &
+      JA, &
+      JB
    ! init_cond_mode:
    ! 0 => Read from file
    ! 1 => NM initial condition
@@ -54,6 +56,8 @@ contains
          bmin = 0._dp
          A_capture = 0._dp
          n_capture = 0._dp
+         JA = 0
+         JB = 0
          rewind (10)
          read (10, nml=collision)
          write (sal_unit, nml=collision)
@@ -82,7 +86,7 @@ contains
          read (cond_unitB, *) max_condB
          rewind (cond_unitB)
          write (sal_unit, *) "Total number of initial conditions (B) =", max_condB
-         if (sysA%nat > 1 .and. Trot > 0._dp) then
+         if (sysA%nat > 1 .and. Trot > 0._dp .or. JA > 0) then
             if (all(sysA%Xeq == 0._dp)) then
                write (sal_unit, *) "Unknown equilibrium position of system A. Cannot perform rotational analysis"
                stop
@@ -91,7 +95,7 @@ contains
             call get_inertia_moments(sysA%nat, sysA%Xeq, sysA%mass, inertiaA, inertia_vec)
             write (sal_unit, *) "B (cm-1):", 1._dp/(4*pi*inertiaA*autoA*1e-8_dp*137)
          end if
-         if (sysB%nat > 1 .and. Trot > 0._dp) then
+         if (sysB%nat > 1 .and. Trot > 0._dp .or. JB > 0) then
             if (all(sysB%Xeq == 0._dp)) then
                write (sal_unit, *) "Unknown equilibrium position of system B. Cannot perform rotational analysis"
                stop
@@ -330,8 +334,9 @@ contains
          call get_LMOM_AMOM(3*2*sysA%nat, XPA, 1, sysA%nat, sysA%mass, QCOM, PCOM, LMOM, AMOM)
          call get_angular_velocity(inertia, AMOM, omega)
          call add_angular_velocity(sysA%nat, XPA, sysA%mass, omega, -1._dp)
-         if (Trot .gt. 0._dp) then
-            call sample_J(inertiaA, Trot, J, Erot)
+         if (Trot .gt. 0._dp .or. JA .gt. 0) then
+            if (Trot .gt. 0._dp) call sample_J(inertiaA, Trot, J, Erot)
+            if (JA .gt. 0) call sample_J_fixJ(inertiaA, JA, J, Erot)
             write (sal_unit, *) "Setting Jx, Jy, Jz, J (A):", J
             write (sal_unit, *) "Rotational energy /au (A):", Erot
             call get_angular_velocity(inertia, J(1:3), omega)
@@ -356,8 +361,9 @@ contains
          call get_LMOM_AMOM(3*2*sysB%nat, XPB, 1, sysB%nat, sysB%mass, QCOM, PCOM, LMOM, AMOM)
          call get_angular_velocity(inertia, AMOM, omega)
          call add_angular_velocity(sysB%nat, XPB, sysB%mass, omega, -1._dp)
-         if (Trot .gt. 0._dp) then
-            call sample_J(inertiaB, Trot, J, Erot)
+         if (Trot .gt. 0._dp .or. JB .gt. 0) then
+            if (Trot .gt. 0._dp) call sample_J(inertiaB, Trot, J, Erot)
+            if (JB .gt. 0) call sample_J_fixJ(inertiaB, JB, J, Erot)
             write (sal_unit, *) "Setting Jx, Jy, Jz, J (B):", J
             write (sal_unit, *) "Rotational energy /au (B):", Erot
             call get_angular_velocity(inertia, J(1:3), omega)
@@ -546,5 +552,52 @@ contains
       write (sal_unit, nml=Qvib)
       sys%Qnum = Qnum
       deallocate (Qnum)
+   end subroutine
+
+   subroutine sample_J_fixJ(inertia, JJ, J, Erot)
+      ! Faraday Discuss. Chem. Soc., 1973,55, 93-99
+      ! VENUS manual
+      implicit none
+      real(dp), intent(in) :: inertia(3)
+      integer, intent(in) :: JJ
+      real(dp), intent(out) :: J(4)
+      integer :: nlin, ix
+      real(dp) :: prob, r, diff1, diff2, Jmax, inertia_mean, Erot
+
+      J = 0.0_dp
+      J(4) = real(JJ, kind=dp)
+      nlin = 0
+      diff1 = abs(inertia(1) - inertia(2))
+      diff2 = abs(inertia(3) - inertia(2))
+
+      if (diff1 > diff2) then
+         ix = 1 ! sample Jx
+      else
+         ix = 3 ! sample Jz
+      end if
+
+      if (abs(inertia(1)) < 1e-10 .and. diff2 < 1e-10) nlin = 1 ! linear molecule
+
+      if (nlin == 0) then
+         Jmax = J(4)
+         r = 1.0_dp
+         prob = 0.0_dp
+         call ran2(r)
+         J(ix) = real(floor(Jmax*r), dp)
+         call ran2(r)
+         if (r > 0.5_dp) J(ix) = -J(ix)
+         Erot = J(ix)**2/inertia(ix)
+      end if
+
+      if (nlin == 1 .or. ix == 1) then
+         call ran2(r)
+         J(2) = sqrt(J(4)**2 - J(1)**2)*sin(2._dp*pi*r)
+         J(3) = sqrt(J(4)**2 - J(1)**2)*cos(2._dp*pi*r)
+         Erot = (J(2)**2/inertia(2) + J(3)**2/inertia(3) + Erot)/2._dp
+      else
+         J(1) = sqrt(J(4)**2 - J(3)**2)*sin(2._dp*pi*r)
+         J(2) = sqrt(J(4)**2 - J(3)**2)*cos(2._dp*pi*r)
+         Erot = (J(1)**2/inertia(1) + J(2)**2/inertia(2) + Erot)/2._dp
+      end if
    end subroutine
 end module xyzqct_initial_conditions
