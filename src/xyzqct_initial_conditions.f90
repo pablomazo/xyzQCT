@@ -294,7 +294,7 @@ contains
       logical, intent(out) :: propagate
       real(dp) :: XPA(3*2*sysA%nat), XPB(3*2*sysB%nat), QCOM(3), PCOM(3), mtot, r, ang, &
                   inertia(3), inertia_vec(3, 3), LMOM(3), AMOM(3), omega(3), phi, theta, chi, mred, mA, mB, &
-                  J(4), erel, erelmax, prob, Erot
+                  J(4), erel, erelmax, prob, Erot, erelmin
       integer :: iat
 
       XP = 0.0_dp
@@ -387,11 +387,12 @@ contains
          erel = Ecoll
       else
          erelmax = 15._dp*Ttrans
+         erelmin = 1e-5_dp
          r = 1.0_dp
          prob = 0.0_dp
          do while (r > prob)
             call ran2(r)
-            erel = erelmax*r
+            erel = (erelmax - erelmin) * r + erelmin
             prob = erel/Ttrans*exp(-erel/Ttrans)*exp(1.0_dp)
             call ran2(r)
          end do
