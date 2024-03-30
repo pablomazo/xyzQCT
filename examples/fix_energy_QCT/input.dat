@@ -1,0 +1,36 @@
+&input
+nini=1 ! index of initial trajectory
+ntrajs=5000 ! index for final trajectory
+nA=1 ! Number of atoms in subsystem A
+nB=3 ! Number of atoms in subsystem B
+potential_mode=0 ! which potential to use: 0 => used provided
+propagator_mode=1 ! which propagator to use: 1 => verlet
+initcond_mode=3 ! how to setup initial conditions: 3 => read from file
+rfin=200. ! Maximum distance between any pair of atoms after which the propagation stops
+tottime=1000000 ! Maximum propagation tme
+/
+
+&propagator
+deltat=5e-2 ! Delta time for verlet propagator
+/
+
+&systemA
+initcond_file="../../../ini_H" ! file with initial conditions of system A
+atname(1) = "H" ! atom name for system A
+/
+&systemB
+initcond_file="../../../HCN_condicion2" ! file with initial condition of system B
+atname(1) = "H" ! atom name for atom 1 in system B
+atname(2) = "C" ! atom name for atom 2 in system B
+atname(3) = "N" ! atom name for atom 3 in system B
+Xeq(1)=-1.644702965261 ! Equilibirum geometry of system B.
+Xeq(4)=-0.569931500325
+Xeq(7)=0.607075583776
+/
+
+&collision
+bmax=140.62313998769903, ! maximum impact parameter to sample
+ecoll=0.01, ! collision energy
+rini=190 ! initial distance between systems A and B
+JB=0 ! rotational state for system B
+/

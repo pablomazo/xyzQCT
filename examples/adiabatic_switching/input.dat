@@ -1,0 +1,25 @@
+&input
+nini=1 ! index of initial trajectory
+ntrajs=100 ! index of final trajectory
+nA=3 ! number of atoms in the system
+potential_mode=2 ! potential mode to use: 2 => switch from normal modes to user provided
+propagator_mode=1 ! propagator to use: 1 => verlet propagator
+initcond_mode=1 ! how to setup initial conditions: 1 => normal modes initial conditions
+rfin=1e20 ! Not used for AS. Maximum distance between atoms before stoping propagation
+tottime=200 ! Total propagation time => adiabatic switch + extra propagation
+/
+
+&propagator
+deltat = 5e-2 ! Delta time for verlet propagator
+/
+
+&systemA
+initcond_fileA="eq_geometry.xyz" ! file with equilibrium geometry of the system
+atnameA(1) = "H" ! Atom name 1
+atnameA(2) = "C" ! Atom name 2
+atnameA(3) = "N" ! Atom name 3
+/
+
+&adiabatic_switch
+Ts=200 ! Adiabatic switching time
+/

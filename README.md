@@ -30,3 +30,8 @@ PES=$(addprefix $(PESdir), system1_pes.f90)
 ```
 
 After setting these variables run `make` and the `QCT.x` executable should be created.
+
+To run the code just execute the binary file `QCT.x`. It will automatically read the input file `input.dat` with the calculation setup. A file `sal` is generated with a log of the calculation. In this file the user can find all the available keys to control the code execution.
+
+## Examples
+The folder `examples` contains several `input.dat` files for 3 common calculations: Adiabatic switching initial condition generation, and collisions to get statistics at constant energy and temperature.
