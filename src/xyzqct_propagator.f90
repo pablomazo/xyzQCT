@@ -49,6 +49,7 @@ contains
    end subroutine
 
    subroutine set_DDEABM_propagator()
+      use xyzqct_constants, only: iunit
       use xyzqct_hamiltonian, only: derivs
       implicit none
       integer :: ios, totalsteps
@@ -57,8 +58,8 @@ contains
       relerr = 1.e-8_dp
       abserr = 1.e-8_dp
       max_step_factor = 10._dp
-      rewind (10)
-      read (10, nml=propagator, iostat=ios)
+      rewind (iunit)
+      read (iunit, nml=propagator, iostat=ios)
       write (sal_unit, nml=propagator)
    end subroutine
 
@@ -96,13 +97,13 @@ contains
    end subroutine
 
    subroutine set_verlet_propagator()
-      use xyzqct_constants, only: autofs
+      use xyzqct_constants, only: autofs, iunit
       implicit none
       integer :: ios
       namelist /propagator/ deltat
       deltat = 1._dp
-      rewind (10)
-      read (10, nml=propagator, iostat=ios)
+      rewind (iunit)
+      read (iunit, nml=propagator, iostat=ios)
       write (sal_unit, nml=propagator)
       deltat = deltat/autofs
       deltat2 = deltat/2._dp

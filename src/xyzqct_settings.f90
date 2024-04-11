@@ -33,6 +33,7 @@ contains
    end subroutine initial_settings
 
    subroutine setup_system(s, nat, sys)
+      use xyzqct_constants, only: iunit
       implicit none
       character(len=1), intent(in) :: s
       integer, intent(in) :: nat
@@ -54,9 +55,9 @@ contains
       Xeq = 0._dp
       rewind (10)
       if (s == "A") then
-         read (10, nml=systemA, iostat=ios)
+         read (iunit, nml=systemA, iostat=ios)
       else
-         read (10, nml=systemB, iostat=ios)
+         read (iunit, nml=systemB, iostat=ios)
       end if
       if (ios .ne. 0) write (sal_unit, "('Namelist system',a1,' not found')") s
 

@@ -1,6 +1,6 @@
 program QCT
    use xyzqct_constants, only: dp, autofs, autouma, autocm_1, autoA, &
-                               sal_unit, xyz_unit, end_unit, as_unit
+                               sal_unit, xyz_unit, end_unit, as_unit, iunit
    use xyzqct_settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
                               initcond_mode, temperature, propagator_mode, nB, nat, rfin, Ts, sysA, sysB
    use xyzqct_hamiltonian, only: derivs, get_potential, total_ener
@@ -47,9 +47,9 @@ program QCT
    rfin = 200._dp
 
    open (sal_unit, file="sal", status="replace")
-   open (end_unit, file="end_conditions", status="replace")
-   open (10, file="input.dat", status="old")
-   read (10, nml=input)
+   open (newunit=end_unit, file="end_conditions", status="replace")
+   open (newunit=iunit, file="input.dat", status="old")
+   read (iunit, nml=input)
    call code_starter()
    write (sal_unit, nml=input)
    ! Convert times
@@ -61,7 +61,7 @@ program QCT
    call get_potential(potential_mode)
    call set_init_cond(initcond_mode) ! set initial conditions.
    call set_propagator(propagator_mode)
-   close (10)
+   close (iunit)
 
    do itraj = nini, ntrajs
       final_t = 0._dp
@@ -73,7 +73,7 @@ program QCT
       tprev = 0._dp
       if (print_time > 0._dp) then
          write (traj_file, '("traj_",i6.6,".xyz")') itraj
-         open (xyz_unit, file=trim(traj_file), status="replace")
+         open (newunit=xyz_unit, file=trim(traj_file), status="replace")
       end if
       call get_init_cond(XPini, prop)
       XP = XPini

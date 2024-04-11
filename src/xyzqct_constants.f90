@@ -1,14 +1,16 @@
 module xyzqct_constants
    implicit none
    integer, parameter :: dp = kind(1d0), &
-                         sal_unit = 6, &
-                         xyz_unit = 91, &
-                         end_unit = 92, &
-                         cond_unitA = 100, &
-                         cond_unitB = 101, &
-                         as_unit = 102, & ! file to store initial conditions from AS
                          sp = kind(1e0), &
+                         sal_unit = 6, &
                          I4B = SELECTED_INT_KIND(9)
+   integer, public ::    xyz_unit, &
+                      end_unit, &
+                      cond_unitA, &
+                      cond_unitB, &
+                      iunit, &
+                      tmpunit, &
+                      as_unit ! file to store initial conditions from AS
    real(dp), parameter, public :: autofs = 2.41888e-2_dp, &
                                   autoA = 0.529177_dp, &
                                   autokg = 9.10939e-31_dp, &

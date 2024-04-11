@@ -20,6 +20,7 @@ module xyzqct_hamiltonian
 contains
 
    subroutine get_potential(mode)
+      use xyzqct_constants, only: iunit
       integer, intent(in) :: mode
       integer :: ios
       write (sal_unit, "(/A)") "************************************"
@@ -36,8 +37,8 @@ contains
          write (sal_unit, "(/A/)") "Adiabatic switching"
          potential => adiabatic_switching
          Ts = 0._dp
-         rewind (10)
-         read (10, nml=adiabatic_switch, iostat=ios)
+         rewind (iunit)
+         read (iunit, nml=adiabatic_switch, iostat=ios)
          if (ios .ne. 0) then
             write (sal_unit, "(/A/)") "Namelist adiabatic_switch not found"
             write (sal_unit, "(/A/)") "You must define the switching time in it."

@@ -27,6 +27,7 @@ module xyzqct_initial_conditions
 
 contains
    subroutine set_init_cond(mode)
+      use xyzqct_constants, only: iunit
       use xyzqct_physics, only: get_inertia_moments
       implicit none
       integer :: mode
@@ -37,7 +38,7 @@ contains
       select case (mode)
       case (0)
          write (sal_unit, "(/A)") "Reading initial conditions from file:", trim(sysA%initcond_file)
-         open (cond_unitA, file=trim(sysA%initcond_file), status="old")
+         open (newunit=cond_unitA, file=trim(sysA%initcond_file), status="old")
          read (cond_unitA, *) max_condA
          rewind (cond_unitA)
          write (sal_unit, *) "Total number of initial conditions =", max_condA
@@ -58,8 +59,8 @@ contains
          n_capture = 0._dp
          JA = 0
          JB = 0
-         rewind (10)
-         read (10, nml=collision)
+         rewind (iunit)
+         read (iunit, nml=collision)
          write (sal_unit, nml=collision)
          Ecoll = Ecoll/autoeV
          Trot = Trot*kb/autoJ
@@ -78,11 +79,11 @@ contains
             stop
          end if
 
-         open (cond_unitA, file=trim(sysA%initcond_file), status="old")
+         open (newunit=cond_unitA, file=trim(sysA%initcond_file), status="old")
          read (cond_unitA, *) max_condA
          rewind (cond_unitA)
          write (sal_unit, *) "Total number of initial conditions (A) =", max_condA
-         open (cond_unitB, file=trim(sysB%initcond_file), status="old")
+         open (newunit=cond_unitB, file=trim(sysB%initcond_file), status="old")
          read (cond_unitB, *) max_condB
          rewind (cond_unitB)
          write (sal_unit, *) "Total number of initial conditions (B) =", max_condB
@@ -392,7 +393,7 @@ contains
          prob = 0.0_dp
          do while (r > prob)
             call ran2(r)
-            erel = (erelmax - erelmin) * r + erelmin
+            erel = (erelmax - erelmin)*r + erelmin
             prob = erel/Ttrans*exp(-erel/Ttrans)*exp(1.0_dp)
             call ran2(r)
          end do
@@ -505,6 +506,7 @@ contains
    end subroutine
 
    subroutine setup_NM(sys)
+      use xyzqct_constants, only: iunit, tmpunit
       use xyzqct_physics, only: NM_analysis, get_COM, get_inertia_moments, matrix_rotation
       use xyzqct_utils, only: write_freq_NM, write_xyz
       implicit none
@@ -538,17 +540,17 @@ contains
          deallocate (freqs, CXQ)
          call write_freq_NM(sys%nat, sys%nfreqs, sys%freqs, sys%CXQ)
       else
-         open (11, file=trim(sys%initcond_file), status="old")
-         call read_Data4NM(11, sys)
-         close (11)
+         open (newunit=tmpunit, file=trim(sys%initcond_file), status="old")
+         call read_Data4NM(tmpunit, sys)
+         close (tmpunit)
       end if
       allocate (sys%Qnum(sys%nfreqs), &
                 sys%amp(sys%nfreqs), &
                 sys%Qmax(sys%nfreqs), &
                 Qnum(sys%nfreqs))
-      rewind (10)
+      rewind (iunit)
       Qnum = 0
-      read (10, nml=Qvib, iostat=ios)
+      read (iunit, nml=Qvib, iostat=ios)
       if (ios .ne. 0) write (sal_unit, *) "Namelist Qvib not found"
       write (sal_unit, nml=Qvib)
       sys%Qnum = Qnum
