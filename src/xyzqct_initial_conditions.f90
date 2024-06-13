@@ -565,7 +565,7 @@ contains
       integer, intent(in) :: JJ
       real(dp), intent(out) :: J(4)
       integer :: nlin, ix
-      real(dp) :: prob, r, diff1, diff2, Jmax, inertia_mean, Erot
+      real(dp) :: prob, r, diff1, diff2, Jmax, Erot
 
       J = 0.0_dp
       J(4) = real(JJ, kind=dp)

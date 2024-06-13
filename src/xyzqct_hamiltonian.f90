@@ -90,7 +90,7 @@ contains
       use xyzqct_settings, only: sysA
       use xyzqct_physics, only: matrix_rotation, rotate_to_eckart
       implicit none
-      integer :: ifreq, i, j
+      integer :: ifreq, i
       real(dp), intent(in) :: posxyz(ndim/2)
       real(dp), intent(out) :: pot
       real(dp) :: Q(sysA%nfreqs), q_(ndim/2), mass_(ndim/2), Teck(3, 3), rot_pos(ndim/2)

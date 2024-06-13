@@ -2,8 +2,8 @@ program QCT
    use xyzqct_constants, only: dp, autofs, autouma, autocm_1, autoA, &
                                sal_unit, xyz_unit, end_unit, as_unit, iunit
    use xyzqct_settings, only: initial_settings, ndim, nA, mass, XP, XPini, potential_mode, &
-                              initcond_mode, temperature, propagator_mode, nB, nat, rfin, Ts, sysA, sysB
-   use xyzqct_hamiltonian, only: derivs, get_potential, total_ener
+                              initcond_mode, temperature, propagator_mode, nB, nat, rfin, Ts
+   use xyzqct_hamiltonian, only: get_potential, total_ener
    use xyzqct_initial_conditions, only: set_init_cond, get_init_cond, write_end_cond
    use xyzqct_physics, only: get_COM, get_LMOM_AMOM, get_angular_velocity, add_angular_velocity, &
                              get_inertia_moments, matrix_rotation
@@ -14,12 +14,12 @@ program QCT
    implicit none
 
    character(len=80) :: traj_file
-   integer :: ntrajs, itraj, nini, seed_size, iat
+   integer :: ntrajs, itraj, nini, iat
    real(dp) :: tottime, kener, &
                potener, print_time, tprev, Eini, Eend, E_s, &
                init_cond_print, final_t, &
                QCOM(3), PCOM(3), LMOM(3), AMOM(3), elapsed, &
-               inertia(3), inertia_vec(3, 3), omega(3), dum
+               inertia(3), inertia_vec(3, 3), omega(3)
    logical :: open_unit, prop
 
    namelist /input/ &

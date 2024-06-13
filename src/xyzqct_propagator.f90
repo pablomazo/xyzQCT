@@ -52,7 +52,7 @@ contains
       use xyzqct_constants, only: iunit
       use xyzqct_hamiltonian, only: derivs
       implicit none
-      integer :: ios, totalsteps
+      integer :: ios
       namelist /propagator/ relerr, abserr, max_step_factor
       gval = 0._dp
       relerr = 1.e-8_dp
