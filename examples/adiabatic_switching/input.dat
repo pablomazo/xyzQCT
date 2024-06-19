@@ -14,10 +14,10 @@ deltat = 5e-2 ! Delta time for verlet propagator
 /
 
 &systemA
-initcond_fileA="eq_geometry.xyz" ! file with equilibrium geometry of the system
-atnameA(1) = "H" ! Atom name 1
-atnameA(2) = "C" ! Atom name 2
-atnameA(3) = "N" ! Atom name 3
+initcond_file="eq_geometry.xyz" ! file with equilibrium geometry of the system
+atname(1) = "H" ! Atom name 1
+atname(2) = "C" ! Atom name 2
+atname(3) = "N" ! Atom name 3
 /
 
 &adiabatic_switch
