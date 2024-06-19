@@ -68,15 +68,23 @@ contains
       real(dp), intent(in) :: pos(3*nat), mass(nat)
       real(dp), intent(out) :: inertia(3), inertia_mat(3, 3) ! inertia_mat holds the eigenvector of the inertia matrix on out
       integer :: iat
+      real(dp) :: pos_(3*nat), com(3), pcom(3)
+
+      call get_COM(3*nat, pos, 1, nat, mass, com, pcom)
+
+      ! Set origin in COM
+      do iat = 1, nat
+         pos_(3*(iat - 1) + 1:3*iat) = pos(3*(iat - 1) + 1:3*iat) - com
+      end do
 
       inertia_mat = 0._dp
       do iat = 1, nat
-         inertia_mat(1, 1) = inertia_mat(1, 1) + mass(iat)*(pos(3*(iat - 1) + 2)**2 + pos(3*(iat - 1) + 3)**2)
-         inertia_mat(2, 2) = inertia_mat(2, 2) + mass(iat)*(pos(3*(iat - 1) + 1)**2 + pos(3*(iat - 1) + 3)**2)
-         inertia_mat(3, 3) = inertia_mat(3, 3) + mass(iat)*(pos(3*(iat - 1) + 1)**2 + pos(3*(iat - 1) + 2)**2)
-         inertia_mat(1, 2) = inertia_mat(1, 2) - mass(iat)*pos(3*(iat - 1) + 1)*pos(3*(iat - 1) + 2)
-         inertia_mat(1, 3) = inertia_mat(1, 3) - mass(iat)*pos(3*(iat - 1) + 1)*pos(3*(iat - 1) + 3)
-         inertia_mat(2, 3) = inertia_mat(2, 3) - mass(iat)*pos(3*(iat - 1) + 2)*pos(3*(iat - 1) + 3)
+         inertia_mat(1, 1) = inertia_mat(1, 1) + mass(iat)*(pos_(3*(iat - 1) + 2)**2 + pos_(3*(iat - 1) + 3)**2)
+         inertia_mat(2, 2) = inertia_mat(2, 2) + mass(iat)*(pos_(3*(iat - 1) + 1)**2 + pos_(3*(iat - 1) + 3)**2)
+         inertia_mat(3, 3) = inertia_mat(3, 3) + mass(iat)*(pos_(3*(iat - 1) + 1)**2 + pos_(3*(iat - 1) + 2)**2)
+         inertia_mat(1, 2) = inertia_mat(1, 2) - mass(iat)*pos_(3*(iat - 1) + 1)*pos_(3*(iat - 1) + 2)
+         inertia_mat(1, 3) = inertia_mat(1, 3) - mass(iat)*pos_(3*(iat - 1) + 1)*pos_(3*(iat - 1) + 3)
+         inertia_mat(2, 3) = inertia_mat(2, 3) - mass(iat)*pos_(3*(iat - 1) + 2)*pos_(3*(iat - 1) + 3)
       end do
       inertia_mat(2, 1) = inertia_mat(1, 2)
       inertia_mat(3, 1) = inertia_mat(1, 3)
