@@ -48,7 +48,6 @@ program QCT
 
    open (sal_unit, file="sal", status="replace")
    open (newunit=end_unit, file="end_conditions", status="replace")
-   open (newunit=iunit, file="input.dat", status="old")
    read (iunit, nml=input)
    call code_starter()
    write (sal_unit, nml=input)

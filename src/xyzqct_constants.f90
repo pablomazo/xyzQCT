@@ -3,12 +3,12 @@ module xyzqct_constants
    integer, parameter :: dp = kind(1d0), &
                          sp = kind(1e0), &
                          sal_unit = 6, &
+                         iunit = 5, &
                          I4B = SELECTED_INT_KIND(9)
    integer, public ::    xyz_unit, &
                       end_unit, &
                       cond_unitA, &
                       cond_unitB, &
-                      iunit, &
                       tmpunit, &
                       as_unit ! file to store initial conditions from AS
    real(dp), parameter, public :: autofs = 2.41888e-2_dp, &
