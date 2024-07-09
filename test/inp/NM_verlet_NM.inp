@@ -1,0 +1,22 @@
+! quadratic potential for 3 atom system
+&input
+nini=1 ! index of initial trajectory
+ntrajs=1 ! index of final trajectory
+nA=3 ! number of atoms in the system
+potential_mode=1
+propagator_mode=1
+initcond_mode=1
+rfin=1e20 ! Maximum distance between atoms before stoping propagation
+tottime=200 ! Total propagation time
+/
+
+&propagator
+deltat = 5e-2
+/
+&systemA
+atname(1) = "C" ! Atom name 1
+atname(2) = "O" ! Atom name 2
+atname(3) = "H" ! Atom name 3
+xeq(1) = -0.529177249
+xeq(7) = 1.587531747
+/
