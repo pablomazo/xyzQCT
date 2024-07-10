@@ -174,8 +174,8 @@ contains
                                 add_angular_velocity, get_inertia_moments
       use xyzqct_hamiltonian, only: total_ener
       implicit none
-      integer, intent(in) :: nfreqs
-      real(dp), intent(in) :: freqs(:), Qnum(:), mass(:), Xeq(:), CXQ(:,:)
+      integer, intent(in) :: nfreqs, Qnum(:)
+      real(dp), intent(in) :: freqs(:), mass(:), Xeq(:), CXQ(:,:)
       real(dp), intent(out) :: XP(ndim)
       integer :: ix, ifreq, nat
       real(dp) :: amp(nfreqs), phase(nfreqs), Q(nfreqs), P(nfreqs), m, &

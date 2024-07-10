@@ -5,7 +5,9 @@ module xyzqct_settings
       integer :: nat, nfreqs
       real(dp), allocatable :: Xeq(:), mass(:)
       ! For NM
-      real(dp), allocatable :: CXQ(:, :), freqs(:), Qnum(:), Qmax(:)
+      real(dp), allocatable :: CXQ(:, :), freqs(:)
+      integer, allocatable :: Qnum(:), Qmax(:)
+      real(dp) :: Tvib
       character(len=2), allocatable :: atname(:)
       character(len=80) :: initcond_file
    end type
