@@ -524,7 +524,7 @@ contains
       if (sys%initcond_file == "") then
          write (sal_unit, "(/A)") "Perfoming vibrational analysis of system:"
          write (sal_unit, *) "Moving system to COM and orient according to inertia moments"
-         call get_COM(3*sys%nat, sys%Xeq, 1, sys%nat, sys%mass, com, dum)
+         call get_COM(3*2*sys%nat, sys%Xeq, 1, sys%nat, sys%mass, com, dum)
          do iat = 1, sys%nat
             sys%Xeq(3*(iat - 1) + 1:3*iat) = sys%Xeq(3*(iat - 1) + 1:3*iat) - com
          end do

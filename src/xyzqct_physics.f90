@@ -70,7 +70,7 @@ contains
       integer :: iat
       real(dp) :: pos_(3*nat), com(3), pcom(3)
 
-      call get_COM(3*nat, pos, 1, nat, mass, com, pcom)
+      call get_COM(3*2*nat, pos, 1, nat, mass, com, pcom)
 
       ! Set origin in COM
       do iat = 1, nat
@@ -307,7 +307,7 @@ contains
 
       sm = sqrt(mass)
       ! Evaluate COM of the system.
-      call get_COM(3*nat, xin, 1, nat, mass, com, dum)
+      call get_COM(3*2*nat, xin, 1, nat, mass, com, dum)
 
       ! Set origin in COM
       do iat = 1, nat
