@@ -226,22 +226,23 @@ contains
       use xyzqct_constants, only: h, c, kb, autocm_1
       use xyzqct_settings, only: temperature
       implicit none
-      integer :: imode, ii
+      integer :: imode, ii, Q(sysA%nfreqs)
       real(dp), intent(out) :: XP(ndim)
       real(dp) :: rand1, rand2, factor, prob
 
       ! Sample the values of Qnum for temperature T
+      Q = 0
       do imode = 1, sysA%nfreqs
          factor = h*sysA%freqs(imode)*autocm_1*100*c/(kb*temperature)
          do ii = 1, 1000
             call random_number(rand1)
             call random_number(rand2)
-            sysA%Qnum(imode) = floor((sysA%Qmax(imode) + 1)*rand1)
-            prob = exp(-sysA%Qnum(imode)*factor)*(1.-exp(-factor))
+            Q(imode) = floor((sysA%Qmax(imode) + 1)*rand1)
+            prob = exp(-Q(imode)*factor)*(1.-exp(-factor))
             if (rand2 < prob) exit
          end do
       end do
-      call NM_init_cond(sysA%nfreqs, sysA%freqs, sysA%Qnum, sysA%mass, sysA%CXQ, sysA%Xeq, XP)
+      call NM_init_cond(sysA%nfreqs, sysA%freqs, Q, sysA%mass, sysA%CXQ, sysA%Xeq, XP)
    end subroutine
 
    subroutine read_Data4NM(read_unit, sys)
