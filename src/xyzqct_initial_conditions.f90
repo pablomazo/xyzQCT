@@ -140,7 +140,7 @@ contains
       case (0)
          call from_file_init_cond(max_condA, cond_unitA, sysA%nat, XP)
       case (1)
-         call NM_init_cond(XP)
+         call NM_init_cond(sysA%nfreqs, sysA%freqs, sysA%Qnum, sysA%mass, sysA%CXQ, sysA%Xeq, XP)
       case (2)
          call NM_init_cond_T(XP)
       case (3)
@@ -168,50 +168,53 @@ contains
       rewind (cond_unit)
    end subroutine
 
-   subroutine NM_init_cond(XP)
+   subroutine NM_init_cond(nfreqs, freqs, Qnum, mass, CXQ, Xeq, XP)
       use xyzqct_constants, only: pi
       use xyzqct_physics, only: get_COM, get_LMOM_AMOM, matrix_rotation, get_angular_velocity, &
                                 add_angular_velocity, get_inertia_moments
       use xyzqct_hamiltonian, only: total_ener
       implicit none
-      integer :: ix, ifreq
+      integer, intent(in) :: nfreqs
+      real(dp), intent(in) :: freqs(:), Qnum(:), mass(:), Xeq(:), CXQ(:,:)
       real(dp), intent(out) :: XP(ndim)
-      real(dp) :: phase(sysA%nfreqs), Q(sysA%nfreqs), P(sysA%nfreqs), mass, &
+      integer :: ix, ifreq, nat
+      real(dp) :: amp(nfreqs), phase(nfreqs), Q(nfreqs), P(nfreqs), m, &
                   QCOM(3), PCOM(3), LMOM(3), AMOM(3), inertia(3), inertia_vec(3, 3), omega(3), &
                   kener, potener, E0, E
 
-      sysA%amp = sqrt((2._dp*sysA%Qnum + 1._dp)/sysA%freqs) ! Maximum NM amplitudes
+      nat = size(mass)
+      amp = sqrt((2._dp*Qnum + 1._dp)/freqs) ! Maximum NM amplitudes
 
       call ran2(phase)
       XP = 0._dp
       phase = 2._dp*pi*phase
-      Q = sysA%amp*sin(phase)
-      P = sysA%freqs*sysA%amp*cos(phase)
+      Q = amp*sin(phase)
+      P = freqs*amp*cos(phase)
 
       do ix = 1, ndim/2
-         mass = sqrt(sysA%mass((ix - 1)/3 + 1))
-         do ifreq = 1, sysA%nfreqs
-            XP(ix) = XP(ix) + Q(ifreq)*sysA%CXQ(ix, ifreq)
-            XP(ix + ndim/2) = XP(ix + ndim/2) + P(ifreq)*sysA%CXQ(ix, ifreq)
+         m = sqrt(mass((ix - 1)/3 + 1))
+         do ifreq = 1, nfreqs
+            XP(ix) = XP(ix) + Q(ifreq)*CXQ(ix, ifreq)
+            XP(ix + ndim/2) = XP(ix + ndim/2) + P(ifreq)*CXQ(ix, ifreq)
          end do
-         XP(ix) = XP(ix)/mass
-         XP(ndim/2 + ix) = XP(ndim/2 + ix)*mass
+         XP(ix) = XP(ix)/m
+         XP(ndim/2 + ix) = XP(ndim/2 + ix)*m
       end do
-      XP(:ndim/2) = XP(:ndim/2) + sysA%Xeq
+      XP(:ndim/2) = XP(:ndim/2) + Xeq
 
       call total_ener(0._dp, XP, kener, potener)
       E0 = kener + potener
-      call get_inertia_moments(sysA%nat, XP(:3*sysA%nat), sysA%mass, inertia, inertia_vec)
-      call matrix_rotation(3, sysA%nat, XP(:3*sysA%nat), inertia_vec)
-      call matrix_rotation(3, sysA%nat, XP(3*sysA%nat + 1:), inertia_vec)
-      call get_COM(ndim, XP, 1, sysA%nat, sysA%mass, QCOM, PCOM)
-      call get_LMOM_AMOM(ndim, XP, 1, sysA%nat, sysA%mass, QCOM, PCOM, LMOM, AMOM)
+      call get_inertia_moments(nat, XP(:3*nat), sysA%mass, inertia, inertia_vec)
+      call matrix_rotation(3, nat, XP(:3*nat), inertia_vec)
+      call matrix_rotation(3, nat, XP(3*nat + 1:), inertia_vec)
+      call get_COM(ndim, XP, 1, nat, mass, QCOM, PCOM)
+      call get_LMOM_AMOM(ndim, XP, 1, nat, mass, QCOM, PCOM, LMOM, AMOM)
       write (sal_unit, *) "Total angular of initial condition: ", sqrt(sum(AMOM**2))
       call get_angular_velocity(inertia, AMOM, omega)
-      call add_angular_velocity(sysA%nat, XP, sysA%mass, omega, -1._dp)
+      call add_angular_velocity(nat, XP, sysA%mass, omega, -1._dp)
       E = 1e10_dp
       do while (abs(E - E0)/E0 > 1e-4)
-         XP(3*sysA%nat + 1:) = XP(3*sysA%nat + 1:)*E0/E
+         XP(3*nat + 1:) = XP(3*nat + 1:)*E0/E
          call total_ener(0._dp, XP, kener, potener)
          E = (kener + potener)
       end do
@@ -238,7 +241,7 @@ contains
             if (rand2 < prob) exit
          end do
       end do
-      call NM_init_cond(XP)
+      call NM_init_cond(sysA%nfreqs, sysA%freqs, sysA%Qnum, sysA%mass, sysA%CXQ, sysA%Xeq, XP)
    end subroutine
 
    subroutine read_Data4NM(read_unit, sys)
