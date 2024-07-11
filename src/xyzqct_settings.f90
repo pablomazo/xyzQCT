@@ -5,7 +5,7 @@ module xyzqct_settings
       integer :: nat, nfreqs
       real(dp), allocatable :: Xeq(:), mass(:)
       ! For NM
-      real(dp), allocatable :: CXQ(:, :), freqs(:), amp(:), Qnum(:), Qmax(:)
+      real(dp), allocatable :: CXQ(:, :), freqs(:), Qnum(:), Qmax(:)
       character(len=2), allocatable :: atname(:)
       character(len=80) :: initcond_file
    end type

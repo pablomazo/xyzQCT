@@ -549,7 +549,6 @@ contains
          close (tmpunit)
       end if
       allocate (sys%Qnum(sys%nfreqs), &
-                sys%amp(sys%nfreqs), &
                 sys%Qmax(sys%nfreqs), &
                 Qnum(sys%nfreqs))
       rewind (iunit)
