@@ -35,19 +35,20 @@ contains
    end subroutine initial_settings
 
    subroutine setup_system(s, nat, sys)
-      use xyzqct_constants, only: iunit
+      use xyzqct_constants, only: iunit, autoJ, kb
       implicit none
       character(len=1), intent(in) :: s
       integer, intent(in) :: nat
       type(System), intent(inout) :: sys
       integer :: ios, iat
       real(dp), allocatable :: mass(:), Xeq(:)
+      real(dp) :: Tvib
       character(len=2), allocatable :: atname(:)
       character(len=80) :: initcond_file
       namelist /systemA/ &
-         mass, atname, Xeq, initcond_file
+         mass, atname, Xeq, initcond_file, Tvib
       namelist /systemB/ &
-         mass, atname, Xeq, initcond_file
+         mass, atname, Xeq, initcond_file, Tvib
 
       sys%nat = nat
       allocate (mass(nat), atname(nat), Xeq(3*nat), &
@@ -55,6 +56,7 @@ contains
       initcond_file = ""
       mass = 0._dp
       Xeq = 0._dp
+      Tvib = 0.0_dp
       rewind (10)
       if (s == "A") then
          read (iunit, nml=systemA, iostat=ios)
@@ -81,6 +83,7 @@ contains
       sys%atname = atname
       sys%Xeq = Xeq/autoA
       sys%initcond_file = initcond_file
+      sys%Tvib = Tvib * kb / autoJ
       deallocate (mass, atname, Xeq)
    end subroutine
 end module
