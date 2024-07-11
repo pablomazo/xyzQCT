@@ -1,6 +1,6 @@
 module xyzqct_initial_conditions
    use xyzqct_constants, only: dp, sal_unit, end_unit, cond_unitA, cond_unitB, autoeV, pi, kb, autoJ, autoA
-   use xyzqct_settings, only: ndim, temperature, rfin, &
+   use xyzqct_settings, only: ndim, rfin, &
                               sysA, sysB, System
    use xyzqct_rand, only: ran2
    implicit none
@@ -48,7 +48,7 @@ contains
       case (2)
          write (sal_unit, "(/A)") "Using NM initial conditions (sampled at temperature T)"
          call setup_NM(sysA)
-         call compute_Qmax(temperature, sysA)
+         call compute_Qmax(sysA)
       case (3)
          write (sal_unit, "(/A)") "Using initial conditions for A+B collision"
          Ecoll = 0._dp
@@ -223,8 +223,6 @@ contains
    end subroutine
 
    subroutine NM_init_cond_T(XP)
-      use xyzqct_constants, only: h, c, kb, autocm_1
-      use xyzqct_settings, only: temperature
       implicit none
       integer :: imode, ii, Q(sysA%nfreqs)
       real(dp), intent(out) :: XP(ndim)
@@ -233,7 +231,7 @@ contains
       ! Sample the values of Qnum for temperature T
       Q = 0
       do imode = 1, sysA%nfreqs
-         factor = h*sysA%freqs(imode)*autocm_1*100*c/(kb*temperature)
+         factor = sysA%freqs(imode)/(sysA%Tvib)
          do ii = 1, 1000
             call random_number(rand1)
             call random_number(rand2)
@@ -268,10 +266,8 @@ contains
       sys%freqs = sys%freqs/autocm_1
    end subroutine read_Data4NM
 
-   subroutine compute_Qmax(T, sys)
-      use xyzqct_constants, only: h, c, kb, autocm_1
+   subroutine compute_Qmax(sys)
       implicit none
-      real(dp), intent(in) :: T
       type(System), intent(inout) :: sys
       integer :: ifreq, iv
       real(dp) :: prob, factor
@@ -280,7 +276,7 @@ contains
 
       sys%Qmax = 0
       do ifreq = 1, sys%nfreqs
-         factor = h*sys%freqs(ifreq)*autocm_1*100*c/(kb*T)
+         factor = sys%freqs(ifreq)/(sys%Tvib)
          do iv = 1, maxv
             prob = exp(-iv*factor)*(1.-exp(-factor))
             if (prob .lt. threshold) exit

@@ -13,7 +13,7 @@ module xyzqct_settings
    end type
    integer, public :: nA, nB, nat, ndim, nfreqs, potential_mode, initcond_mode, propagator_mode
    type(System), public :: sysA, sysB
-   real(dp) :: Ts, temperature, rfin
+   real(dp) :: Ts, rfin
    integer :: ios
    integer, allocatable :: Qnum(:), Qmax(:)
    real(dp), allocatable :: XP(:), XPini(:), mass(:)
